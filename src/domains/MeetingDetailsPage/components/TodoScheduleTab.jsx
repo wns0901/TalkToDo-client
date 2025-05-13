@@ -169,7 +169,7 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
         <DateSectionHeader 
           date={date} 
           onAddToSchedule={(e) => {
-            e.stopPropagation(); // 아코디언이 펼쳐지지 않도록 클릭 이벤트 중지
+            e.stopPropagation(); 
             onAddDateToMySchedule(date, todos);
           }} 
         />
@@ -231,7 +231,7 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
     severity: 'success'
   });
 
-  // 팀원 목록 (실제로는 API에서 가져오거나 props로 전달받을 수 있습니다)
+
   const teamMembers = [
     '장준영 부장',
     '김범수 과장',
@@ -245,9 +245,6 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
     fetchMeetingTodos(meetingId);
   }, [meetingId]);
 
-  /**
-   * 회의 할 일 데이터를 가져옵니다.
-   */
   const fetchMeetingTodos = (id) => {
     setLoading(true);
     getMeetingDetails(id)
@@ -305,7 +302,7 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
    * 날짜별 할 일을 내 일정에 추가하는 핸들러
    */
   const handleAddDateToMySchedule = (date, dateTodos) => {
-    // 실제로는 날짜별 할 일을 사용자의 일정에 추가하는 API를 호출합니다.
+
     showSnackbar(`${date} 할 일 ${dateTodos.length}개가 내 일정에 추가되었습니다.`);
   };
 

@@ -57,9 +57,7 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
     fetchMeetingNotes(meetingId);
   }, [meetingId]);
   
-  /**
-   * 회의 노트 데이터를 가져옵니다.
-   */
+
   const fetchMeetingNotes = (id) => {
     setLoading(true);
     getMeetingDetails(id)
@@ -81,9 +79,7 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
     setIsEditing(prev => ({...prev, [section]: true}));
   };
   
-  /**
-   * 편집한 내용을 저장합니다.
-   */
+
   const handleSave = (section) => {
     updateMeetingNotes(meetingId, { [section]: editedNotes[section] })
       .then(data => {
@@ -97,9 +93,7 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
       });
   };
 
-  /**
-   * 스낵바를 표시합니다.
-   */
+
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
       open: true,
@@ -108,16 +102,11 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
     });
   };
 
-  /**
-   * 스낵바를 닫습니다.
-   */
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({...prev, open: false}));
   };
 
-  /**
-   * 편집 중인 노트 내용을 변경합니다.
-   */
+
   const handleNoteChange = (section, value) => {
     setEditedNotes(prev => ({...prev, [section]: value}));
   };
@@ -191,9 +180,7 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
   );
 };
 
-/**
- * 로딩 중일 때 표시할 컴포넌트
- */
+
 const LoadingView = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 3 }}>
     <CircularProgress />

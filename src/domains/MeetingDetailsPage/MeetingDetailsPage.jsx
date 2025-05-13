@@ -36,17 +36,14 @@ const MeetingDetailsPage = () => {
   });
   
   const navigate = useNavigate();
-  // 실제 라우팅이 구현되면 아래 코드를 활성화하세요
   // const { id } = useParams();
-  const meetingId = 1; // 임시로 회의 ID를 1로 설정
+  const meetingId = 1; 
 
   useEffect(() => {
     fetchMeetingDetails(meetingId);
   }, [meetingId]);
 
-  /**
-   * 회의 상세 정보를 가져옵니다.
-   */
+
   const fetchMeetingDetails = (id) => {
     setLoading(true);
     getMeetingDetails(id)
