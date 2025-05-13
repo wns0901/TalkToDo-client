@@ -1,7 +1,12 @@
-import React from 'react'
+import React from 'react';
+import { Box, Typography } from '@mui/material';
 
 const MainPage = () => {
-  return <div>MainPage</div>
-}
+  return (
+    <Box>
+      <Typography>Main Page</Typography>
+    </Box>
+  );
+};
 
-export default MainPage
+export default MainPage;
