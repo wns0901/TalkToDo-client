@@ -39,4 +39,12 @@ export default {
     console.log("Transcript updated:", transcript);
     return true;
   },
+
+  async getPeopleList() {
+    return [
+      { id: 1, name: "홍길동", position: "부장", department: "개발팀" },
+      { id: 2, name: "이순신", position: "과장", department: "개발팀" },
+      { id: 3, name: "임꺽정", position: "대리", department: "개발팀" },
+    ];
+  },
 };
