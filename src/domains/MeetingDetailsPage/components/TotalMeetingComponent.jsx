@@ -118,7 +118,6 @@ const TotalMeetingComponent = () => {
         ))}
       </Box>
 
-      {/* 수정 버튼: 텍스트가 수정된 경우에만 오른쪽 아래 고정 */}
       {isEdited && (
         <Button
           variant="contained"

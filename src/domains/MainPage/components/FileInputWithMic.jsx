@@ -1,13 +1,19 @@
 import React, { useRef } from "react";
 import { Box, TextField, IconButton } from "@mui/material";
 import MicIcon from "@mui/icons-material/Mic";
+import { useNavigate } from "react-router-dom";
 
 const FileInputWithMic = ({ fileName, onFileClick, onFileChange }) => {
   const fileInputRef = useRef();
+  const navigate = useNavigate();
 
   const handleInputClick = () => {
     if (onFileClick) onFileClick();
     else fileInputRef.current.click();
+  };
+
+  const startRecoding = () => {
+    navigate("/recoding");
   };
   
   return (
@@ -33,7 +39,7 @@ const FileInputWithMic = ({ fileName, onFileClick, onFileChange }) => {
         style={{ display: "none" }}
         onChange={onFileChange}
       />
-      <IconButton sx={{ ml: 3, color: "black" }}>
+      <IconButton sx={{ ml: 3, color: "black" }} onClick={startRecoding}>
         <MicIcon />
       </IconButton>
     </Box>

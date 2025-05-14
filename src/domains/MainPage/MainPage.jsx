@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import FileInputWithMic from "./components/FileInputWithMic";
+import { useNavigate } from "react-router-dom";
 
 const MainPage = () => {
   const [fileName, setFileName] = useState("");
-  const [audioUrl, setAudioUrl] = useState(null);
+  const navigate = useNavigate();
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setFileName(file.name);
-      setAudioUrl(URL.createObjectURL(file));
     }
   };
 
@@ -23,7 +23,7 @@ const MainPage = () => {
         handleFileChange(syntheticEvent);
       }
     };
-    
+
     const preventDefault = (event) => event.preventDefault();
     window.addEventListener("dragover", preventDefault);
     window.addEventListener("drop", handleWindowDrop);
@@ -33,6 +33,11 @@ const MainPage = () => {
       window.removeEventListener("drop", handleWindowDrop);
     };
   }, []);
+
+  const handleConvert = () => {
+    alert("변환 성공");
+    navigate("/meeting-details");
+  };
 
   return (
     <Box
@@ -49,10 +54,15 @@ const MainPage = () => {
         음성을 등록해주세요
       </Typography>
       <FileInputWithMic fileName={fileName} onFileChange={handleFileChange} />
-      {audioUrl && (
-        <Box sx={{ mt: 4, width: "100%", maxWidth: 600 }}>
-          <audio src={audioUrl} controls style={{ width: "100%" }} />
-        </Box>
+      {fileName && (
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 3, px: 5, py: 1.5, fontWeight: 700 }}
+          onClick={handleConvert}
+        >
+          변환
+        </Button>
       )}
     </Box>
   );
