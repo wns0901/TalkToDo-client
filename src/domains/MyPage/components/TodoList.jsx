@@ -38,7 +38,7 @@ const TodoList = ({
     .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
   return (
-    <Paper sx={myPageStyles.todoPostit}>
+    <Paper sx={{ ...myPageStyles.todoPostit, maxHeight: '400px', overflow: 'auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6" sx={myPageStyles.postitTitle}>
           내 할 일

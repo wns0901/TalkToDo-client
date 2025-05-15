@@ -6,6 +6,7 @@ import {
   Button,
   InputAdornment,
   Dialog,
+  DialogTitle
 } from "@mui/material";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import SetToListModal from "./SetToListModal";
@@ -24,8 +25,8 @@ const EmailForm = () => {
   return (
     <Box
       sx={{
-        width: 400,
-        bgcolor: "#ddd",
+        width: 600,
+        bgcolor: "#fff",
         p: 3,
         borderRadius: 2,
         display: "flex",
@@ -95,11 +96,12 @@ const EmailForm = () => {
   );
 };
 
-const EmailSendingModal = () => {
+const EmailSendingModal = ({ open, onClose }) => {
   return (
-    <>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>메일로 발송</DialogTitle>
       <EmailForm />
-    </>
+    </Dialog>
   );
 };
 
