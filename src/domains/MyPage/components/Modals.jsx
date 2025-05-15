@@ -25,8 +25,21 @@ export const EventModal = ({
   isOpen, 
   onClose, 
   events, 
-  onEditEvent 
+  onEditEvent,
+  onDateClick
 }) => {
+  // 일정 날짜로 이동 핸들러
+  const handleDateClick = (event) => {
+    // 날짜 객체 생성
+    const eventDate = new Date(event.startDate);
+    
+    // 날짜 클릭 이벤트 실행
+    onDateClick(eventDate);
+    
+    // 모달 닫기
+    onClose();
+  };
+
   return (
     <Dialog 
       open={isOpen} 
@@ -47,8 +60,10 @@ export const EventModal = ({
               sx={{ 
                 py: 1,
                 borderBottom: '1px solid #f5f5f5',
-                '&:last-child': { borderBottom: 'none' }
+                '&:last-child': { borderBottom: 'none' },
+                cursor: 'pointer'
               }}
+              onClick={() => handleDateClick(event)}
             >
               <ListItemText 
                 primary={event.title} 
@@ -70,6 +85,7 @@ export const EventModal = ({
                     borderRadius: '4px',
                     backgroundColor: getCategoryColor(event.category)
                   }}
+                  onClick={(e) => e.stopPropagation()} // 이벤트 버블링 방지
                 />
                 <IconButton 
                   size="small" 
@@ -211,26 +227,6 @@ export const AddEventModal = ({
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
           />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              카테고리
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {categories.filter(c => c !== '전체').map(category => (
-                <Chip
-                  key={category}
-                  label={category}
-                  onClick={() => onChange({ target: { name: 'category', value: category } })}
-                  variant={newEvent.category === category ? "filled" : "outlined"}
-                  sx={{
-                    bgcolor: newEvent.category === category 
-                      ? getCategoryColor(category)
-                      : undefined
-                  }}
-                />
-              ))}
-            </Box>
-          </FormControl>
           <FormControl fullWidth>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               타입
@@ -248,6 +244,18 @@ export const AddEventModal = ({
                 variant={newEvent.type === '개인' ? "filled" : "outlined"}
                 sx={{ bgcolor: newEvent.type === '개인' ? getCategoryColor('개인') : undefined }}
               />
+              <Chip
+                label="회사"
+                onClick={() => onChange({ target: { name: 'type', value: '회사' } })}
+                variant={newEvent.type === '회사' ? "filled" : "outlined"}
+                sx={{ bgcolor: newEvent.type === '회사' ? getCategoryColor('회사') : undefined }}
+              />
+              <Chip
+                label="팀"
+                onClick={() => onChange({ target: { name: 'type', value: '팀' } })}
+                variant={newEvent.type === '팀' ? "filled" : "outlined"}
+                sx={{ bgcolor: newEvent.type === '팀' ? getCategoryColor('팀') : undefined }}
+              />
             </Box>
           </FormControl>
         </Box>
@@ -255,7 +263,7 @@ export const AddEventModal = ({
       <DialogActions>
         <Button onClick={onClose}>취소</Button>
         <Button 
-          onClick={onSave}
+          onClick={() => onSave()}
           disabled={!newEvent.title.trim()}
           variant="contained"
           sx={{ bgcolor: '#757575' }}
@@ -320,26 +328,6 @@ export const EditEventModal = ({
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
           />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              카테고리
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {categories.filter(c => c !== '전체').map(category => (
-                <Chip
-                  key={category}
-                  label={category}
-                  onClick={() => onChange({ target: { name: 'category', value: category } })}
-                  variant={editEvent.category === category ? "filled" : "outlined"}
-                  sx={{
-                    bgcolor: editEvent.category === category 
-                      ? getCategoryColor(category)
-                      : undefined
-                  }}
-                />
-              ))}
-            </Box>
-          </FormControl>
           <FormControl fullWidth>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               타입
@@ -357,6 +345,18 @@ export const EditEventModal = ({
                 variant={editEvent.type === '개인' ? "filled" : "outlined"}
                 sx={{ bgcolor: editEvent.type === '개인' ? getCategoryColor('개인') : undefined }}
               />
+              <Chip
+                label="회사"
+                onClick={() => onChange({ target: { name: 'type', value: '회사' } })}
+                variant={editEvent.type === '회사' ? "filled" : "outlined"}
+                sx={{ bgcolor: editEvent.type === '회사' ? getCategoryColor('회사') : undefined }}
+              />
+              <Chip
+                label="팀"
+                onClick={() => onChange({ target: { name: 'type', value: '팀' } })}
+                variant={editEvent.type === '팀' ? "filled" : "outlined"}
+                sx={{ bgcolor: editEvent.type === '팀' ? getCategoryColor('팀') : undefined }}
+              />
             </Box>
           </FormControl>
         </Box>
@@ -364,7 +364,7 @@ export const EditEventModal = ({
       <DialogActions>
         <Button onClick={onClose}>취소</Button>
         <Button 
-          onClick={onSave}
+          onClick={() => onSave()}
           disabled={!editEvent.title.trim()}
           variant="contained"
           sx={{ bgcolor: '#757575' }}

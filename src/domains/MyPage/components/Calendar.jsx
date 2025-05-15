@@ -18,38 +18,82 @@ import { format, isSameMonth, isSameDay, startOfMonth, endOfMonth, startOfWeek, 
 import { myPageStyles } from '../css/MyPage.styles';
 import { getCategoryColor, filterEventsByDate } from '../js/utils';
 
+/**
+ * 캘린더 컴포넌트
+ * 월별 일정을 표시하고 일정 관리 기능을 제공
+ */
 const Calendar = ({ 
   currentMonth, 
   selectedDate, 
   schedules, 
   categoryFilter, 
-  categories,
   onPrevMonth, 
   onNextMonth, 
   onDateClick, 
   showMoreEvents,
   onCategoryFilterChange,
-  setCategoryModalOpen
+  onAddEvent
 }) => {
-  // 달력 헤더 렌더링
+  /**
+   * 일정 추가 버튼 클릭 핸들러
+   * 현재 선택된 필터를 기반으로 일정 타입을 설정
+   */
+  const handleAddEventClick = () => {
+    const defaultEvent = {
+      title: '',
+      date: format(selectedDate, 'yyyy-MM-dd'),
+      startDate: format(selectedDate, 'yyyy-MM-dd'),
+      endDate: format(selectedDate, 'yyyy-MM-dd'),
+      category: categoryFilter !== '전체' ? categoryFilter : '개인',
+      type: categoryFilter !== '전체' ? categoryFilter : '개인'
+    };
+    
+    onAddEvent(defaultEvent);
+  };
+
+  /**
+   * 달력 헤더 렌더링
+   * 월 이동 버튼과 일정 추가 버튼을 포함
+   */
   const renderHeader = () => {
     const dateFormat = "yyyy.MM";
     return (
-      <Box sx={myPageStyles.calendarHeader}>
-        <IconButton onClick={onPrevMonth}>
-          <ChevronLeftIcon />
-        </IconButton>
-        <Typography variant="h5" sx={myPageStyles.calendarTitle}>
-          {format(currentMonth, dateFormat)}
-        </Typography>
-        <IconButton onClick={onNextMonth}>
-          <ChevronRightIcon />
-        </IconButton>
+      <Box sx={{ 
+        ...myPageStyles.calendarHeader,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton onClick={onPrevMonth} aria-label="이전 달">
+            <ChevronLeftIcon />
+          </IconButton>
+          <Typography variant="h5" sx={myPageStyles.calendarTitle}>
+            {format(currentMonth, dateFormat)}
+          </Typography>
+          <IconButton onClick={onNextMonth} aria-label="다음 달">
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={handleAddEventClick}
+          sx={{ minHeight: 0, py: 0.5 }}
+          aria-label="일정 추가"
+        >
+          일정 추가
+        </Button>
       </Box>
     );
   };
 
-  // 날짜 셀 내의 이벤트 렌더링
+  /**
+   * 날짜 셀 내의 이벤트 렌더링
+   * @param {Array} events - 표시할 이벤트 배열
+   */
   const renderDayEvents = (events) => {
     if (events.length === 0) return null;
 
@@ -61,6 +105,7 @@ const Calendar = ({
         maxHeight: '75px',
         overflow: 'hidden'
       }}>
+        {/* 최대 2개의 이벤트만 표시 */}
         {events.slice(0, 2).map((event) => (
           <Box 
             key={event.id} 
@@ -82,6 +127,7 @@ const Calendar = ({
             {event.title}
           </Box>
         ))}
+        {/* 2개 이상의 이벤트가 있는 경우 더보기 표시 */}
         {events.length > 2 && (
           <Box 
             sx={{ 
@@ -105,7 +151,9 @@ const Calendar = ({
     );
   };
 
-  // 달력 렌더링
+  /**
+   * 달력 그리드 렌더링
+   */
   const renderCalendar = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
@@ -120,8 +168,9 @@ const Calendar = ({
     const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
     // 카테고리 필터
-    const allCategories = ['전체', ...categories.filter(c => c !== '전체')];
+    const categories = ['전체', '회사', '팀', '개인'];
 
+    // 카테고리 필터 행
     const categoryFilters = (
       <TableRow>
         <TableCell colSpan={7} align="center" sx={myPageStyles.filterContainer}>
@@ -130,35 +179,21 @@ const Calendar = ({
               필터
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {allCategories.slice(0, 4).map(cat => (
+              {categories.map(category => (
                 <Button 
-                  key={cat}
-                  variant={categoryFilter === cat ? 'contained' : 'outlined'}
-                  onClick={() => onCategoryFilterChange(cat)}
+                  key={category}
+                  variant={categoryFilter === category ? 'contained' : 'outlined'}
+                  onClick={() => onCategoryFilterChange(category)}
                   sx={{ 
                     minWidth: '80px',
-                    bgcolor: categoryFilter === cat ? '#757575' : 'white',
-                    color: categoryFilter === cat ? 'white' : 'black',
+                    bgcolor: categoryFilter === category ? '#757575' : 'white',
+                    color: categoryFilter === category ? 'white' : 'black',
                     border: '1px solid #ccc'
                   }}
                 >
-                  {cat}
+                  {category}
                 </Button>
               ))}
-              {allCategories.length > 4 && (
-                <Button
-                  variant="outlined"
-                  sx={{ minWidth: 'auto', borderColor: '#ccc' }}
-                  onClick={() => setCategoryModalOpen(true)}
-                >
-                  +{allCategories.length - 4}
-                </Button>
-              )}
-              <Tooltip title="카테고리 추가">
-                <IconButton onClick={() => setCategoryModalOpen(true)} size="small">
-                  <AddIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
             </Box>
           </Box>
         </TableCell>
@@ -168,13 +203,13 @@ const Calendar = ({
     // 요일 헤더 행
     const dayHeaders = (
       <TableRow>
-        {daysOfWeek.map((day, i) => (
+        {daysOfWeek.map((day, index) => (
           <TableCell 
-            key={i} 
+            key={index} 
             align="center" 
             sx={{ 
               py: 1, 
-              color: i === 0 ? 'red' : i === 6 ? 'blue' : 'inherit',
+              color: index === 0 ? 'red' : index === 6 ? 'blue' : 'inherit',
               fontWeight: 'bold',
               borderBottom: '1px solid #e0e0e0',
               borderTop: '1px solid #e0e0e0'

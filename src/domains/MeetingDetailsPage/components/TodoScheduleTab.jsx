@@ -30,7 +30,9 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Tooltip
+  Tooltip,
+  Menu,
+  ListItemButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -41,7 +43,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import { getMeetingDetails, updateTodo, addTodo, deleteTodo } from '../../../apis/fakeApi';
+import { getMeetingDetails, deleteTodo } from '../../../apis/fakeApi';
 
 /**
  * 할 일 항목 컴포넌트
@@ -142,6 +144,10 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
     setExpanded(!expanded);
   };
 
+  const handleAddToSchedule = (date, type) => {
+    onAddDateToMySchedule(date, todos, type);
+  };
+
   return (
     <Accordion 
       expanded={expanded} 
@@ -160,7 +166,7 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
     >
       <AccordionSummary
         expandIcon={
-          <IconButton size="small">
+          <IconButton size="small" component="span">
             <ExpandMoreIcon />
           </IconButton>
         }
@@ -168,10 +174,7 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
       >
         <DateSectionHeader 
           date={date} 
-          onAddToSchedule={(e) => {
-            e.stopPropagation(); 
-            onAddDateToMySchedule(date, todos);
-          }} 
+          onAddToSchedule={handleAddToSchedule}
         />
       </AccordionSummary>
       <AccordionDetails sx={{ p: 0 }}>
@@ -195,18 +198,55 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
 /**
  * 날짜 섹션 헤더 컴포넌트
  */
-const DateSectionHeader = ({ date, onAddToSchedule }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-    <Typography variant="h6">
-      일 하기({formatDate(date)})
-    </Typography>
-    <Tooltip title="내 일정에 추가">
-      <IconButton size="small" onClick={onAddToSchedule}>
-        <NoteAddIcon fontSize="small" />
-      </IconButton>
-    </Tooltip>
-  </Box>
-);
+const DateSectionHeader = ({ date, onAddToSchedule }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  
+  const handleMenuOpen = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleMenuClose = (event) => {
+    if (event) event.stopPropagation();
+    setAnchorEl(null);
+  };
+  
+  const handleScheduleAdd = (type) => (event) => {
+    event.stopPropagation();
+    onAddToSchedule(date, type);
+    handleMenuClose();
+  };
+  
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+      <Typography variant="h6">
+        일 하기({formatDate(date)})
+      </Typography>
+      <Tooltip title="내 일정에 추가">
+        <IconButton 
+          size="small" 
+          component="span" 
+          onClick={handleMenuOpen}
+        >
+          <NoteAddIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MenuItem onClick={handleScheduleAdd('회사')}>회사 일정으로 추가</MenuItem>
+        <MenuItem onClick={handleScheduleAdd('팀')}>팀 일정으로 추가</MenuItem>
+        <MenuItem onClick={handleScheduleAdd('개인')}>개인 일정으로 추가</MenuItem>
+        <Divider />
+        <MenuItem onClick={handleScheduleAdd('전체')}>모든 일정으로 추가</MenuItem>
+      </Menu>
+    </Box>
+  );
+};
 
 /**
  * ToDo 및 일정 탭 컴포넌트
@@ -216,29 +256,11 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
   const [error, setError] = useState(null);
   const [todos, setTodos] = useState([]);
 
-  const [todoDialogOpen, setTodoDialogOpen] = useState(false);
-  const [currentTodo, setCurrentTodo] = useState({ 
-    text: '', 
-    completed: false, 
-    assignee: '', 
-    dueDate: '' 
-  });
-  const [editingTodoId, setEditingTodoId] = useState(null);
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
-
-
-  const teamMembers = [
-    '장준영 부장',
-    '김범수 과장',
-    '이지원 대리',
-    '박민준 사원',
-    '최서연 과장'
-  ];
 
   // 회의 데이터 불러오기
   useEffect(() => {
@@ -275,68 +297,25 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
   /**
    * 할 일 편집 핸들러
    */
-  const handleEditTodo = (todo) => {
-    setCurrentTodo({ ...todo });
-    setEditingTodoId(todo.id);
-    setTodoDialogOpen(true);
-  };
-
-  /**
-   * 새 할 일 추가 핸들러
-   */
-  const handleAddTodo = () => {
-    const today = new Date();
-    const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    setCurrentTodo({ 
-      text: '', 
-      completed: false, 
-      assignee: '', 
-      dueDate: formattedDate
-    });
-    setEditingTodoId(null);
-    setTodoDialogOpen(true);
+  const handleEditTodo = () => {
+    // 편집 기능이 제거되었으므로 알림만 표시
+    showSnackbar('편집 기능이 비활성화되었습니다.', 'info');
   };
 
   /**
    * 날짜별 할 일을 내 일정에 추가하는 핸들러
    */
-  const handleAddDateToMySchedule = (date, dateTodos) => {
-
-    showSnackbar(`${date} 할 일 ${dateTodos.length}개가 내 일정에 추가되었습니다.`);
-  };
-
-  /**
-   * 할 일 다이얼로그 닫기 핸들러
-   */
-  const handleCloseTodoDialog = () => {
-    setTodoDialogOpen(false);
-  };
-
-  /**
-   * 할 일 저장 핸들러
-   */
-  const handleSaveTodo = () => {
-    if (currentTodo.text.trim() === '') {
-      showSnackbar('할 일을 입력해주세요.', 'error');
+  const handleAddDateToMySchedule = (date, dateTodos, type) => {
+    if (type === '전체') {
+      // 모든 타입(회사, 팀, 개인)으로 일정 추가
+      showSnackbar(`${date} 할 일 ${dateTodos.length}개가 모든 일정에 추가되었습니다.`);
+      // 여기에 실제 일정 추가 로직 구현
       return;
     }
-
-    const savePromise = editingTodoId
-      ? updateTodo(meetingId, editingTodoId, currentTodo)
-      : addTodo(meetingId, currentTodo);
-
-    savePromise
-      .then(data => {
-        setTodos(data.todos);
-        setTodoDialogOpen(false);
-        const message = editingTodoId ? '할 일이 수정되었습니다.' : '할 일이 추가되었습니다.';
-        showSnackbar(message);
-      })
-      .catch(err => {
-        const action = editingTodoId ? '수정' : '추가';
-        showSnackbar(`${action} 실패: ${err.message}`, 'error');
-      });
+    
+    // 특정 타입으로 일정 추가
+    showSnackbar(`${date} 할 일 ${dateTodos.length}개가 ${type} 일정으로 추가되었습니다.`);
+    // 여기에 실제 일정 추가 로직 구현
   };
 
   /**
@@ -355,16 +334,6 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
    */
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({...prev, open: false}));
-  };
-
-  /**
-   * 현재 할 일 상태 업데이트 핸들러
-   */
-  const handleTodoChange = (field, value) => {
-    setCurrentTodo(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   // 날짜별로 할 일을 그룹화
@@ -398,7 +367,7 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
 
   return (
     <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
-      <TodoHeader onAddTodo={handleAddTodo} />
+      <TodoHeader />
       
       <Divider sx={{ mb: 3 }} />
       
@@ -407,16 +376,6 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
         onEditTodo={handleEditTodo}
         onDeleteTodo={handleDeleteTodo}
         onAddToSchedule={handleAddDateToMySchedule}
-      />
-
-      <TodoDialog
-        open={todoDialogOpen}
-        todo={currentTodo}
-        isEditing={Boolean(editingTodoId)}
-        teamMembers={teamMembers}
-        onClose={handleCloseTodoDialog}
-        onSave={handleSaveTodo}
-        onChange={handleTodoChange}
       />
 
       <Snackbar
@@ -454,19 +413,11 @@ const ErrorView = ({ error }) => (
 /**
  * 할 일 헤더 컴포넌트
  */
-const TodoHeader = ({ onAddTodo }) => (
+const TodoHeader = () => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
     <Typography variant="h5" component="h2" fontWeight="bold">
       ToDo & 일정
     </Typography>
-    <Button 
-      variant="contained" 
-      startIcon={<AddIcon />}
-      onClick={onAddTodo}
-      sx={{ bgcolor: '#3E1A11', '&:hover': { bgcolor: '#2A120B' } }}
-    >
-      할 일 추가
-    </Button>
   </Box>
 );
 
@@ -499,63 +450,6 @@ const EmptyTodoMessage = () => (
   <Typography sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
     ToDo 항목이 없습니다. 새로운 항목을 추가해 보세요.
   </Typography>
-);
-
-/**
- * 할 일 다이얼로그 컴포넌트
- */
-const TodoDialog = ({ open, todo, isEditing, teamMembers, onClose, onSave, onChange }) => (
-  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-    <DialogTitle>{isEditing ? '할 일 수정' : '할 일 추가'}</DialogTitle>
-    <DialogContent>
-      <TextField
-        autoFocus
-        margin="dense"
-        label="할 일"
-        fullWidth
-        variant="outlined"
-        value={todo.text}
-        onChange={(e) => onChange('text', e.target.value)}
-        sx={{ mb: 2 }}
-      />
-      <FormControl fullWidth margin="dense" variant="outlined" sx={{ mb: 2 }}>
-        <InputLabel id="assignee-label">담당자</InputLabel>
-        <Select
-          labelId="assignee-label"
-          id="assignee"
-          value={todo.assignee}
-          onChange={(e) => onChange('assignee', e.target.value)}
-          label="담당자"
-        >
-          <MenuItem value="">
-            <em>담당자 없음</em>
-          </MenuItem>
-          {teamMembers.map((member) => (
-            <MenuItem key={member} value={member}>{member}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      <TextField
-        margin="dense"
-        label="마감일 (YYYY-MM-DD)"
-        fullWidth
-        variant="outlined"
-        value={todo.dueDate}
-        onChange={(e) => onChange('dueDate', e.target.value)}
-        sx={{ mb: 2 }}
-      />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose}>취소</Button>
-      <Button 
-        onClick={onSave}
-        variant="contained"
-        sx={{ bgcolor: '#3E1A11', '&:hover': { bgcolor: '#2A120B' } }}
-      >
-        저장
-      </Button>
-    </DialogActions>
-  </Dialog>
 );
 
 export default TodoScheduleTab; 
