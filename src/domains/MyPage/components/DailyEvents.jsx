@@ -46,7 +46,7 @@ const DailyEvents = ({
   };
 
   return (
-    <Paper sx={{ ...myPageStyles.selectedDateEvents, mt: 2 }}>
+    <Paper sx={{ ...myPageStyles.selectedDateEvents, mt: 2, maxHeight: '400px', overflow: 'auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" sx={myPageStyles.selectedDateTitle}>
           {format(selectedDate, 'yyyy년 MM월 dd일')}의 일정

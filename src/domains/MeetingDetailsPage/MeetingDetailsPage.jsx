@@ -20,6 +20,8 @@ import TodoScheduleTab from './components/TodoScheduleTab';
 import TabBar from '../../components/TabBar';
 import { getMeetingDetails } from '../../apis/fakeApi';
 import { meetingDetailsStyles } from './css/MeetingDetailsPage.styles';
+import TotalMeetingComponent from './components/TotalMeetingComponent';
+import EmailSendingModal from "./components/EmailSendingModal";
 
 /**
  * 회의 상세 페이지 컴포넌트
@@ -34,6 +36,7 @@ const MeetingDetailsPage = () => {
     message: '', 
     severity: 'info' 
   });
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   
   const navigate = useNavigate();
   // const { id } = useParams();
@@ -82,9 +85,11 @@ const MeetingDetailsPage = () => {
       view: '공유 상태를 확인합니다.',
       default: '공유 기능을 실행합니다.'
     };
-    
+    if (action === 'email') {
+      setEmailModalOpen(true);
+      return;
+    }
     const message = shareMessages[action] || shareMessages.default;
-    
     setSnackbar({
       open: true,
       message,
@@ -116,12 +121,6 @@ const MeetingDetailsPage = () => {
 
   return (
     <Container maxWidth="lg" sx={meetingDetailsStyles.container}>
-      <MeetingHeader 
-        title={meetingData.title}
-        date={meetingData.date}
-        participants={meetingData.participants}
-        onBack={handleBack}
-      />
 
       <Paper sx={meetingDetailsStyles.paper}>
         <TabBar 
@@ -131,7 +130,7 @@ const MeetingDetailsPage = () => {
         />
 
         <TabPanel value={activeTabIndex} index={0}>
-          <MeetingInfoTab />
+          <TotalMeetingComponent />
         </TabPanel>
         
         <TabPanel value={activeTabIndex} index={1}>
@@ -150,6 +149,7 @@ const MeetingDetailsPage = () => {
         message={snackbar.message}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+      <EmailSendingModal open={emailModalOpen} onClose={() => setEmailModalOpen(false)} />
     </Container>
   );
 };
@@ -253,9 +253,10 @@ const TabPanel = ({ children, value, index, ...other }) => (
     hidden={value !== index}
     id={`meeting-tabpanel-${index}`}
     aria-labelledby={`meeting-tab-${index}`}
+    style={{ display: value === index ? 'block' : 'none', width: '100%' }}
     {...other}
   >
-    {value === index && children}
+    {children}
   </div>
 );
 

@@ -212,7 +212,7 @@ const NotesSection = ({
   minRows = 4,
   isPreformattedText = false
 }) => (
-  <Paper elevation={0} sx={{ bgcolor: 'grey.50', mb: 3 }}>
+  <Paper elevation={0} sx={{ bgcolor: 'grey.50', mb: 3, maxHeight: '400px', overflow: 'auto' }}>
     <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Typography variant="h6" fontWeight="bold">{title}</Typography>
       <SectionActionButton 
