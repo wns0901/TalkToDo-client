@@ -33,9 +33,11 @@ export const myPageStyles = {
   },
   calendarHeader: {
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    mb: 2
+    mb: 2,
+    px: 1,
+    py: 1
   },
   calendarTitle: {
     fontWeight: 'bold',

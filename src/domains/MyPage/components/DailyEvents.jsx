@@ -21,7 +21,8 @@ const DailyEvents = ({
   selectedDate, 
   filteredEvents, 
   onAddEvent, 
-  onEditEvent 
+  onEditEvent,
+  onDateClick
 }) => {
   // 일정 추가 버튼 클릭 핸들러
   const handleAddClick = () => {
@@ -33,6 +34,15 @@ const DailyEvents = ({
       category: '개인',
       type: '개인'
     });
+  };
+  
+  // 일정 날짜로 이동 핸들러
+  const handleDateClick = (event) => {
+    // 날짜 객체 생성
+    const eventDate = new Date(event.startDate);
+    
+    // 날짜 클릭 이벤트 실행
+    onDateClick(eventDate);
   };
 
   return (
@@ -55,7 +65,14 @@ const DailyEvents = ({
       {filteredEvents.length > 0 ? (
         <List>
           {filteredEvents.map(event => (
-            <ListItem key={event.id} sx={myPageStyles.eventItem}>
+            <ListItem 
+              key={event.id} 
+              sx={{
+                ...myPageStyles.eventItem,
+                cursor: 'pointer'
+              }}
+              onClick={() => handleDateClick(event)}
+            >
               <ListItemText 
                 primary={event.title}
                 secondary={formatDateRange(event.startDate, event.endDate)}
@@ -76,11 +93,12 @@ const DailyEvents = ({
                     borderRadius: '4px',
                     backgroundColor: getCategoryColor(event.category)
                   }}
+                  onClick={(e) => e.stopPropagation()} // 이벤트 버블링 방지
                 />
                 <IconButton 
                   size="small" 
                   onClick={(e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // 이벤트 버블링 방지
                     onEditEvent(event);
                   }}
                 >

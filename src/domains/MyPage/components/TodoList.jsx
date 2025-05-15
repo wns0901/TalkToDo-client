@@ -3,7 +3,6 @@ import {
   Box, 
   Typography, 
   Paper, 
-  Button, 
   Divider, 
   List, 
   ListItem, 
@@ -11,70 +10,60 @@ import {
   Checkbox,
   IconButton
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { format } from 'date-fns';
 import { myPageStyles } from '../css/MyPage.styles';
-import { formatDateRange } from '../js/utils';
 
+/**
+ * 개인 할일 목록을 표시하는 컴포넌트
+ */
 const TodoList = ({ 
   schedules, 
-  selectedDate, 
-  onAddEvent, 
   onEditEvent, 
-  onDeleteEvent 
+  onDeleteEvent,
+  onDateClick
 }) => {
-  // 할일 추가 버튼 클릭 핸들러
-  const handleAddClick = () => {
-    onAddEvent({
-      title: '',
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      startDate: format(selectedDate, 'yyyy-MM-dd'),
-      endDate: format(selectedDate, 'yyyy-MM-dd'),
-      category: '개인',
-      type: '개인'
-    });
+  /**
+   * 할일 항목 클릭 시 해당 날짜로 이동하는 핸들러
+   * @param {Object} todo - 할일 객체
+   */
+  const handleTodoClick = (todo) => {
+    const todoDate = new Date(todo.startDate);
+    onDateClick(todoDate);
   };
 
-  // 할일 목록 필터링 (개인 카테고리만)
-  const personalEvents = schedules
-    .filter(event => event.category === '개인')
+  // 개인 카테고리 일정만 필터링하고 날짜순으로 정렬
+  const personalTodos = schedules
+    .filter(event => event.type === '개인')
     .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
   return (
     <Paper sx={myPageStyles.todoPostit}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6" sx={myPageStyles.postitTitle}>
           내 할 일
         </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={handleAddClick}
-          sx={{ minHeight: 0, py: 0.5 }}
-        >
-          일정 추가
-        </Button>
       </Box>
       <Divider sx={{ mb: 2 }} />
       
       <List>
-        {personalEvents.map((todo) => (
+        {personalTodos.map((todo) => (
           <ListItem
             key={todo.id}
-            sx={myPageStyles.todoItem}
+            sx={{
+              ...myPageStyles.todoItem,
+              cursor: 'pointer'
+            }}
+            onClick={() => handleTodoClick(todo)}
           >
             <Checkbox
               sx={myPageStyles.todoCheckbox}
+              onClick={(e) => e.stopPropagation()}
             />
             <ListItemText
               primary={
                 <Box component="span">
-                  {todo.title} <Typography component="span" color="text.secondary" sx={{ fontSize: '0.85em' }}>
-                    ({formatDateRange(todo.startDate, todo.endDate)})
-                  </Typography>
+                  {todo.title}
                 </Box>
               }
               sx={{
@@ -84,27 +73,34 @@ const TodoList = ({
                   whiteSpace: 'nowrap'
                 }
               }}
-              onClick={() => onEditEvent(todo)}
             />
             <Box sx={{ display: 'flex', gap: 0.5 }}>
               <IconButton 
                 size="small" 
-                onClick={() => onEditEvent(todo)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditEvent(todo);
+                }}
                 sx={{ color: '#666' }}
+                aria-label="할일 수정"
               >
                 <EditIcon fontSize="small" />
               </IconButton>
               <IconButton 
                 size="small" 
-                onClick={() => onDeleteEvent(todo.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteEvent(todo.id);
+                }}
                 sx={{ color: '#666' }}
+                aria-label="할일 삭제"
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Box>
           </ListItem>
         ))}
-        {personalEvents.length === 0 && (
+        {personalTodos.length === 0 && (
           <Box sx={{ textAlign: 'center', p: 2 }}>
             <Typography color="text.secondary">
               개인 일정이 없습니다.
