@@ -48,10 +48,10 @@ import { getMeetingDetails, deleteTodo } from '../../../apis/fakeApi';
 /**
  * 할 일 항목 컴포넌트
  */
-const TodoItem = ({ num, text, assignee, onEdit, onDelete }) => {
+const TodoItem = ({ num, text, assignee, startDate, dueDate, onEdit, onDelete }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-      <Box sx={{ width: '40px' }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+      <Box sx={{ width: '40px', mt: 1 }}>
         <Typography variant="body2" color="text.secondary">
           투두{num}
         </Typography>
@@ -59,22 +59,35 @@ const TodoItem = ({ num, text, assignee, onEdit, onDelete }) => {
       <Box sx={{ 
         flex: 1, 
         display: 'flex', 
-        alignItems: 'center',
+        flexDirection: 'column',
         borderBottom: '1px solid #ccc',
         py: 1
       }}>
-        <TextField
-          variant="standard"
-          value={text}
-          fullWidth
-          InputProps={{
-            readOnly: true,
-            disableUnderline: true,
-          }}
-          sx={{ mr: 2 }}
-        />
-        <AssigneeInfo assignee={assignee} onEdit={onEdit} />
-        <TodoActions onEdit={onEdit} onDelete={onDelete} />
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <TextField
+            variant="standard"
+            value={text}
+            fullWidth
+            InputProps={{
+              readOnly: true,
+              disableUnderline: true,
+            }}
+            sx={{ mr: 2 }}
+          />
+          <AssigneeInfo assignee={assignee} onEdit={onEdit} />
+          <TodoActions onEdit={onEdit} onDelete={onDelete} />
+        </Box>
+        
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, ml: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>시작일:</Typography>
+            <Typography variant="body2">{formatDate(startDate)}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>마감일:</Typography>
+            <Typography variant="body2">{formatDate(dueDate)}</Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
@@ -137,7 +150,7 @@ const formatDate = (dateString) => {
 /**
  * 날짜별 할 일 섹션 컴포넌트
  */
-const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySchedule }) => {
+const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySchedule, isTodoSection }) => {
   const [expanded, setExpanded] = useState(false);
 
   const handleToggleExpand = () => {
@@ -175,6 +188,7 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
         <DateSectionHeader 
           date={date} 
           onAddToSchedule={handleAddToSchedule}
+          isTodoSection={isTodoSection}
         />
       </AccordionSummary>
       <AccordionDetails sx={{ p: 0 }}>
@@ -185,6 +199,8 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
               num={index + 1}
               text={todo.text}
               assignee={todo.assignee}
+              startDate={todo.startDate || todo.dueDate}
+              dueDate={todo.dueDate}
               onEdit={() => onEditTodo(todo)}
               onDelete={() => onDeleteTodo(todo.id)}
             />
@@ -198,7 +214,7 @@ const DateSection = ({ date, todos, onEditTodo, onDeleteTodo, onAddDateToMySched
 /**
  * 날짜 섹션 헤더 컴포넌트
  */
-const DateSectionHeader = ({ date, onAddToSchedule }) => {
+const DateSectionHeader = ({ date, onAddToSchedule, isTodoSection }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   
@@ -221,9 +237,9 @@ const DateSectionHeader = ({ date, onAddToSchedule }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
       <Typography variant="h6">
-        일 하기({formatDate(date)})
+        {isTodoSection ? '할 일' : '업무 목록'}({formatDate(date)})
       </Typography>
-      <Tooltip title="내 일정에 추가">
+      <Tooltip title={isTodoSection ? "내 할일에 추가" : "일정에 추가"}>
         <IconButton 
           size="small" 
           component="span" 
@@ -238,11 +254,15 @@ const DateSectionHeader = ({ date, onAddToSchedule }) => {
         onClose={handleMenuClose}
         onClick={(e) => e.stopPropagation()}
       >
-        <MenuItem onClick={handleScheduleAdd('회사')}>회사 일정으로 추가</MenuItem>
-        <MenuItem onClick={handleScheduleAdd('팀')}>팀 일정으로 추가</MenuItem>
-        <MenuItem onClick={handleScheduleAdd('개인')}>개인 일정으로 추가</MenuItem>
-        <Divider />
-        <MenuItem onClick={handleScheduleAdd('전체')}>모든 일정으로 추가</MenuItem>
+        {isTodoSection ? (
+          <MenuItem onClick={handleScheduleAdd('개인')}>내 할일에 추가</MenuItem>
+        ) : (
+          <>
+            <MenuItem onClick={handleScheduleAdd('회사')}>회사 일정에 추가</MenuItem>
+            <MenuItem onClick={handleScheduleAdd('팀')}>팀 일정에 추가</MenuItem>
+            <MenuItem onClick={handleScheduleAdd('개인')}>개인 일정에 추가</MenuItem>
+          </>
+        )}
       </Menu>
     </Box>
   );
@@ -271,7 +291,13 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
     setLoading(true);
     getMeetingDetails(id)
       .then(data => {
-        setTodos(data.todos || []);
+        // 시작일 추가: 기존 데이터에 시작일이 없는 경우 마감일과 동일하게 설정
+        const todosWithStartDate = (data.todos || []).map(todo => ({
+          ...todo,
+          startDate: todo.startDate || todo.dueDate, // 시작일이 없으면 마감일과 동일하게 설정
+          type: todo.type || 'todo' // 타입 정보 추가
+        }));
+        setTodos(todosWithStartDate);
         setLoading(false);
       })
       .catch(err => {
@@ -286,7 +312,13 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
   const handleDeleteTodo = (id) => {
     deleteTodo(meetingId, id)
       .then(data => {
-        setTodos(data.todos);
+        // 시작일 추가: 기존 데이터에 시작일이 없는 경우 마감일과 동일하게 설정
+        const todosWithStartDate = (data.todos || []).map(todo => ({
+          ...todo,
+          startDate: todo.startDate || todo.dueDate,
+          type: todo.type || 'todo'
+        }));
+        setTodos(todosWithStartDate);
         showSnackbar('할 일이 삭제되었습니다.');
       })
       .catch(err => {
@@ -306,16 +338,17 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
    * 날짜별 할 일을 내 일정에 추가하는 핸들러
    */
   const handleAddDateToMySchedule = (date, dateTodos, type) => {
-    if (type === '전체') {
-      // 모든 타입(회사, 팀, 개인)으로 일정 추가
-      showSnackbar(`${date} 할 일 ${dateTodos.length}개가 모든 일정에 추가되었습니다.`);
+    if (type === '개인' && dateTodos[0]?.type === 'todo') {
+      // TODO 항목을 내 할일에 추가
+      showSnackbar(`${date} 할 일 ${dateTodos.length}개가 내 할일에 추가되었습니다.`);
+      // 여기에 실제 일정 추가 로직 구현
+      return;
+    } else if (dateTodos[0]?.type === 'task') {
+      // 업무 항목을 일정에 추가
+      showSnackbar(`${date} 업무 ${dateTodos.length}개가 ${type} 일정에 추가되었습니다.`);
       // 여기에 실제 일정 추가 로직 구현
       return;
     }
-    
-    // 특정 타입으로 일정 추가
-    showSnackbar(`${date} 할 일 ${dateTodos.length}개가 ${type} 일정으로 추가되었습니다.`);
-    // 여기에 실제 일정 추가 로직 구현
   };
 
   /**
@@ -336,9 +369,13 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
     setSnackbar(prev => ({...prev, open: false}));
   };
 
-  // 날짜별로 할 일을 그룹화
-  const getTodosByDate = () => {
-    const grouped = todos.reduce((acc, todo) => {
+  // 날짜별로 할 일과 업무를 그룹화
+  const getTodosByDate = (type) => {
+    const filtered = todos.filter(todo => 
+      type === 'todo' ? todo.type === 'todo' : todo.type === 'task'
+    );
+
+    const grouped = filtered.reduce((acc, todo) => {
       if (!acc[todo.dueDate]) {
         acc[todo.dueDate] = [];
       }
@@ -355,7 +392,8 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
       }));
   };
 
-  const groupedTodosByDate = getTodosByDate();
+  const groupedTodosByDate = getTodosByDate('todo');
+  const groupedTasksByDate = getTodosByDate('task');
 
   if (loading) {
     return <LoadingView />;
@@ -367,16 +405,59 @@ const TodoScheduleTab = ({ meetingId = 1 }) => {
 
   return (
     <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
-      <TodoHeader />
+      <Typography variant="h5" component="h2" fontWeight="bold">
+        ToDo & 일정
+      </Typography>
       
       <Divider sx={{ mb: 3 }} />
       
-      <TodoList 
-        groupedTodos={groupedTodosByDate}
-        onEditTodo={handleEditTodo}
-        onDeleteTodo={handleDeleteTodo}
-        onAddToSchedule={handleAddDateToMySchedule}
-      />
+      {/* 업무 목록 섹션 */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#3E1A11' }}>
+          업무 목록
+        </Typography>
+        <Box sx={{ p: 0, bgcolor: 'grey.50', borderRadius: 1 }}>
+          {groupedTasksByDate.length === 0 ? (
+            <EmptyTodoMessage message="업무 항목이 없습니다. 새로운 항목을 추가해 보세요." />
+          ) : (
+            groupedTasksByDate.map(({ date, todos }) => (
+              <DateSection 
+                key={date}
+                date={date}
+                todos={todos}
+                onEditTodo={handleEditTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onAddDateToMySchedule={handleAddDateToMySchedule}
+                isTodoSection={false}
+              />
+            ))
+          )}
+        </Box>
+      </Box>
+      
+      {/* TODO 섹션 */}
+      <Box>
+        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#3E1A11' }}>
+          TODO
+        </Typography>
+        <Box sx={{ p: 0, bgcolor: 'grey.50', borderRadius: 1 }}>
+          {groupedTodosByDate.length === 0 ? (
+            <EmptyTodoMessage message="ToDo 항목이 없습니다. 새로운 항목을 추가해 보세요." />
+          ) : (
+            groupedTodosByDate.map(({ date, todos }) => (
+              <DateSection 
+                key={date}
+                date={date}
+                todos={todos}
+                onEditTodo={handleEditTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onAddDateToMySchedule={handleAddDateToMySchedule}
+                isTodoSection={true}
+              />
+            ))
+          )}
+        </Box>
+      </Box>
 
       <Snackbar
         open={snackbar.open}
@@ -411,44 +492,11 @@ const ErrorView = ({ error }) => (
 );
 
 /**
- * 할 일 헤더 컴포넌트
+ * 빈 목록 메시지 컴포넌트
  */
-const TodoHeader = () => (
-  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-    <Typography variant="h5" component="h2" fontWeight="bold">
-      ToDo & 일정
-    </Typography>
-  </Box>
-);
-
-/**
- * 할 일 목록 컴포넌트
- */
-const TodoList = ({ groupedTodos, onEditTodo, onDeleteTodo, onAddToSchedule }) => (
-  <Box sx={{ p: 0, bgcolor: 'grey.50' }}>
-    {groupedTodos.length === 0 ? (
-      <EmptyTodoMessage />
-    ) : (
-      groupedTodos.map(({ date, todos }) => (
-        <DateSection 
-          key={date}
-          date={date}
-          todos={todos}
-          onEditTodo={onEditTodo}
-          onDeleteTodo={onDeleteTodo}
-          onAddDateToMySchedule={onAddToSchedule}
-        />
-      ))
-    )}
-  </Box>
-);
-
-/**
- * 빈 할 일 목록 메시지 컴포넌트
- */
-const EmptyTodoMessage = () => (
+const EmptyTodoMessage = ({ message }) => (
   <Typography sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
-    ToDo 항목이 없습니다. 새로운 항목을 추가해 보세요.
+    {message}
   </Typography>
 );
 

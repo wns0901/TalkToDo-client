@@ -31,7 +31,7 @@ const MyPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('전체');
   
   // 카테고리 관리
-  const [categories] = useState(['전체', '회사', '팀', '개인']);
+  const [categories] = useState(['전체', '회사', '팀', '개인', 'TODO']);
   
   // 모달 상태
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -80,27 +80,261 @@ const MyPage = () => {
   
   // 더미 데이터 로드 함수
   const loadDummyData = () => {
+    // 현재 날짜와 달 정보 얻기
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11 (0: 1월, 11: 12월)
+    const formattedMonth = String(currentMonth + 1).padStart(2, '0');
+    
+    // 날짜 생성 헬퍼 함수
+    const getDateStr = (day) => `${currentYear}-${formattedMonth}-${String(day).padStart(2, '0')}`;
+    
     // 임시 데이터 생성
     const dummySchedules = [
-      { id: 1, date: '2025-01-02', startDate: '2025-01-02', endDate: '2025-01-02', title: '회사 미팅 10:00', category: '회사', type: '회사' },
-      { id: 2, date: '2025-01-06', startDate: '2025-01-06', endDate: '2025-01-06', title: '회사 미팅 10:00', category: '회사', type: '회사' },
-      { id: 3, date: '2025-01-06', startDate: '2025-01-06', endDate: '2025-01-06', title: '1차 면접', category: '개인', type: '개인' },
-      { id: 4, date: '2025-01-07', startDate: '2025-01-07', endDate: '2025-01-07', title: '팀 미팅 2:30', category: '팀', type: '팀' },
-      { id: 5, date: '2025-01-08', startDate: '2025-01-08', endDate: '2025-01-10', title: '서류작성 기간', category: '회사', type: '회사' },
-      { id: 6, date: '2025-01-09', startDate: '2025-01-08', endDate: '2025-01-10', title: '서류작성 기간', category: '회사', type: '회사' },
-      { id: 7, date: '2025-01-11', startDate: '2025-01-11', endDate: '2025-01-11', title: '팀 미팅 11:00', category: '팀', type: '팀' },
-      { id: 8, date: '2025-01-12', startDate: '2025-01-12', endDate: '2025-01-14', title: '가계부 정리', category: '개인', type: '개인' },
-      { id: 9, date: '2025-01-14', startDate: '2025-01-14', endDate: '2025-01-14', title: '마케팅 회의', category: '회사', type: '회사' },
-      { id: 10, date: '2025-01-17', startDate: '2025-01-17', endDate: '2025-01-17', title: '2차 면접', category: '개인', type: '개인' },
-      { id: 11, date: '2025-01-18', startDate: '2025-01-18', endDate: '2025-01-18', title: '팀 미팅 13:30', category: '팀', type: '팀' },
-      { id: 12, date: '2025-01-19', startDate: '2025-01-19', endDate: '2025-01-19', title: '2차 면접', category: '개인', type: '개인' },
-      { id: 13, date: '2025-01-22', startDate: '2025-01-22', endDate: '2025-01-22', title: '강의', category: '개인', type: '개인' },
-      { id: 14, date: '2025-01-24', startDate: '2025-01-24', endDate: '2025-01-24', title: '회사 미팅 14:00', category: '회사', type: '회사' },
-      { id: 15, date: '2025-01-28', startDate: '2025-01-28', endDate: '2025-01-28', title: '회사 미팅 15:00', category: '회사', type: '회사' },
-      { id: 16, date: format(today, 'yyyy-MM-dd'), startDate: format(today, 'yyyy-MM-dd'), endDate: format(today, 'yyyy-MM-dd'), title: '할 일 작성하기', category: '개인', type: '개인' },
-      { id: 17, date: format(addDays(today, 1), 'yyyy-MM-dd'), startDate: format(addDays(today, 1), 'yyyy-MM-dd'), endDate: format(addDays(today, 1), 'yyyy-MM-dd'), title: '이메일 확인', category: '개인', type: '개인' },
-      { id: 18, date: format(addDays(today, 2), 'yyyy-MM-dd'), startDate: format(addDays(today, 2), 'yyyy-MM-dd'), endDate: format(addDays(today, 4), 'yyyy-MM-dd'), title: '보고서 제출', category: '개인', type: '개인' },
-      { id: 19, date: format(addDays(today, -1), 'yyyy-MM-dd'), startDate: format(addDays(today, -1), 'yyyy-MM-dd'), endDate: format(addDays(today, -1), 'yyyy-MM-dd'), title: '가계부 정리', category: '개인', type: '개인' }
+      // 회사 일정
+      { 
+        id: 1, 
+        date: getDateStr(5), 
+        startDate: getDateStr(5), 
+        endDate: getDateStr(5), 
+        title: '월간 팀 회의', 
+        category: '회사', 
+        type: '회사',
+        displayInCalendar: true
+      },
+      { 
+        id: 2, 
+        date: getDateStr(12), 
+        startDate: getDateStr(12), 
+        endDate: getDateStr(12), 
+        title: '분기별 실적 보고 미팅', 
+        category: '회사', 
+        type: '회사',
+        displayInCalendar: true
+      },
+      { 
+        id: 3, 
+        date: getDateStr(20), 
+        startDate: getDateStr(20), 
+        endDate: getDateStr(22), 
+        title: '신규 프로젝트 기획', 
+        category: '회사', 
+        type: '회사',
+        displayInCalendar: true
+      },
+      { 
+        id: 4, 
+        date: getDateStr(25), 
+        startDate: getDateStr(25), 
+        endDate: getDateStr(25), 
+        title: '경영진 미팅', 
+        category: '회사', 
+        type: '회사',
+        displayInCalendar: true
+      },
+      
+      // 팀 일정
+      { 
+        id: 5, 
+        date: getDateStr(7), 
+        startDate: getDateStr(7), 
+        endDate: getDateStr(7), 
+        title: '팀 주간 스크럼', 
+        category: '팀', 
+        type: '팀',
+        displayInCalendar: true
+      },
+      { 
+        id: 6, 
+        date: getDateStr(14), 
+        startDate: getDateStr(14), 
+        endDate: getDateStr(14), 
+        title: '팀 주간 스크럼', 
+        category: '팀', 
+        type: '팀',
+        displayInCalendar: true
+      },
+      { 
+        id: 7, 
+        date: getDateStr(21), 
+        startDate: getDateStr(21), 
+        endDate: getDateStr(21), 
+        title: '팀 주간 스크럼', 
+        category: '팀', 
+        type: '팀',
+        displayInCalendar: true
+      },
+      { 
+        id: 8, 
+        date: getDateStr(28), 
+        startDate: getDateStr(28), 
+        endDate: getDateStr(28), 
+        title: '팀 프로젝트 리뷰', 
+        category: '팀', 
+        type: '팀',
+        displayInCalendar: true
+      },
+      
+      // 개인 일정 (할일) - 캘린더에 표시 안됨
+      { 
+        id: 101, 
+        date: getDateStr(4), 
+        startDate: getDateStr(4), 
+        endDate: getDateStr(4), 
+        title: '주간 업무 계획 작성', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 102, 
+        date: getDateStr(6), 
+        startDate: getDateStr(6), 
+        endDate: getDateStr(7), 
+        title: '프로젝트 문서 정리', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 103, 
+        date: getDateStr(10), 
+        startDate: getDateStr(10), 
+        endDate: getDateStr(10), 
+        title: '이메일 정리하기', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 104, 
+        date: getDateStr(13), 
+        startDate: getDateStr(13), 
+        endDate: getDateStr(15), 
+        title: '웹 개발 강의 수강', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 105, 
+        date: getDateStr(18), 
+        startDate: getDateStr(18), 
+        endDate: getDateStr(18), 
+        title: '월간 개인 목표 점검', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 106, 
+        date: format(today, 'yyyy-MM-dd'),
+        startDate: format(today, 'yyyy-MM-dd'),
+        endDate: format(today, 'yyyy-MM-dd'),
+        title: '오늘의 할일 작성', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      { 
+        id: 107, 
+        date: format(addDays(today, 1), 'yyyy-MM-dd'),
+        startDate: format(addDays(today, 1), 'yyyy-MM-dd'),
+        endDate: format(addDays(today, 2), 'yyyy-MM-dd'),
+        title: '프로젝트 자료 조사', 
+        category: '개인', 
+        type: '개인',
+        isTodo: true,
+        displayInCalendar: false
+      },
+      
+      // 개인 일정 (일반 일정)
+      { 
+        id: 201, 
+        date: getDateStr(8), 
+        startDate: getDateStr(8), 
+        endDate: getDateStr(8), 
+        title: '영어 스터디', 
+        category: '개인', 
+        type: '개인',
+        isTodo: false,
+        displayInCalendar: true
+      },
+      { 
+        id: 202, 
+        date: getDateStr(15), 
+        startDate: getDateStr(15), 
+        endDate: getDateStr(15), 
+        title: '영어 스터디', 
+        category: '개인', 
+        type: '개인',
+        isTodo: false,
+        displayInCalendar: true
+      },
+      { 
+        id: 203, 
+        date: getDateStr(22), 
+        startDate: getDateStr(22), 
+        endDate: getDateStr(22), 
+        title: '영어 스터디', 
+        category: '개인', 
+        type: '개인',
+        isTodo: false,
+        displayInCalendar: true
+      },
+      { 
+        id: 204, 
+        date: getDateStr(29), 
+        startDate: getDateStr(29), 
+        endDate: getDateStr(29), 
+        title: '영어 스터디', 
+        category: '개인', 
+        type: '개인',
+        isTodo: false,
+        displayInCalendar: true
+      },
+      { 
+        id: 205, 
+        date: getDateStr(16), 
+        startDate: getDateStr(16), 
+        endDate: getDateStr(16), 
+        title: '건강검진 예약', 
+        category: '개인', 
+        type: '개인',
+        isTodo: false,
+        displayInCalendar: true
+      },
+      
+      // 할일에서 캘린더에 추가된 일정 (TODO 카테고리)
+      { 
+        id: 301, 
+        date: getDateStr(10), 
+        startDate: getDateStr(10), 
+        endDate: getDateStr(10), 
+        title: '이메일 정리하기', 
+        category: 'TODO', 
+        type: 'TODO',
+        isTodo: true,
+        originalTodoId: 103,
+        displayInCalendar: true
+      },
+      { 
+        id: 302, 
+        date: getDateStr(18), 
+        startDate: getDateStr(18), 
+        endDate: getDateStr(18), 
+        title: '월간 개인 목표 점검', 
+        category: 'TODO', 
+        type: 'TODO',
+        isTodo: true,
+        originalTodoId: 105,
+        displayInCalendar: true
+      }
     ];
     
     // 데이터 로딩 시뮬레이션
@@ -198,13 +432,84 @@ const MyPage = () => {
       return; // 취소하면 함수 종료
     }
     
-    alert('일정이 삭제되었습니다(ID: ' + id + ')');
     setSchedules(prev => {
-      const updated = prev.filter(schedule => schedule.id !== id);
+      // 캘린더에 추가된 관련 TODO 항목 찾기 (originalTodoId가 현재 삭제하려는 id와 일치하는 항목)
+      const hasRelatedCalendarItem = prev.some(item => item.originalTodoId === id && item.type === 'TODO');
+      
+      // 관련 캘린더 항목이 있으면 알림
+      if (hasRelatedCalendarItem) {
+        alert('내 할일과 관련된 캘린더 항목도 함께 삭제됩니다.');
+      } else {
+        alert('일정이 삭제되었습니다(ID: ' + id + ')');
+      }
+      
+      // 삭제할 할일과 관련된 캘린더 항목도 함께 삭제
+      const updated = prev.filter(schedule => 
+        schedule.id !== id && !(schedule.originalTodoId === id && schedule.type === 'TODO')
+      );
+      
       // localStorage에 저장
       localStorage.setItem('schedules', JSON.stringify(updated));
       return updated;
     });
+  };
+
+  // 할일을 일정표에 추가하는 핸들러
+  const handleAddTodoToCalendar = (todo) => {
+    if (!todo) return;
+    
+    // 이미 일정에 있는지 확인
+    const todoInCalendar = schedules.find(
+      event => event.originalTodoId === todo.id && event.type === 'TODO'
+    );
+    
+    if (todoInCalendar) {
+      alert('이미 일정에 추가된 할일입니다.');
+      return;
+    }
+    
+    // 할일을 새로운 TODO 타입 일정으로 복제하여 추가
+    const todoForCalendar = {
+      ...todo,
+      id: Date.now(), // 새로운 ID 부여
+      originalTodoId: todo.id, // 원본 할일 ID 저장
+      isTodo: true,
+      category: 'TODO', 
+      type: 'TODO',
+      displayInCalendar: true
+    };
+    
+    // 일정 목록에 새 TODO 추가
+    setSchedules(prev => {
+      const updated = [...prev, todoForCalendar];
+      // localStorage에 저장
+      localStorage.setItem('schedules', JSON.stringify(updated));
+      return updated;
+    });
+    
+    alert('내 할일이 일정표에 추가되었습니다.');
+  };
+
+  // 할일을 일정표에서 제거하는 핸들러
+  const handleRemoveTodoFromCalendar = (originalTodoId) => {
+    if (!originalTodoId) return;
+    
+    // 삭제 전 확인
+    if (!window.confirm('이 할일을 일정표에서 제거하시겠습니까?')) {
+      return;
+    }
+    
+    // 해당 원본 할일 ID를 가진 TODO 타입 항목 제거
+    setSchedules(prev => {
+      const updated = prev.filter(
+        item => !(item.originalTodoId === originalTodoId && item.type === 'TODO')
+      );
+      // localStorage에 저장
+      localStorage.setItem('schedules', JSON.stringify(updated));
+      return updated;
+    });
+    
+    alert('할일이 일정표에서 제거되었습니다.');
   };
 
   // 일정 수정 모달 열기
@@ -298,8 +603,8 @@ const MyPage = () => {
     <Container maxWidth="lg" sx={myPageStyles.container}>
       <PageHeader onBack={handleBack} />
       
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-        <Paper sx={myPageStyles.calendarPaper}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 2 }}>
+        <Paper sx={{ ...myPageStyles.calendarPaper, flex: 2 }}>
           <Calendar 
             currentMonth={currentMonth}
             selectedDate={selectedDate}
@@ -315,12 +620,16 @@ const MyPage = () => {
           />
         </Paper>
 
-        <TodoList 
-          schedules={schedules}
-          onEditEvent={handleOpenEditModal}
-          onDeleteEvent={handleDeletePersonalTodo}
-          onDateClick={onDateClick}
-        />
+        <Box sx={{ flex: 1 }}>
+          <TodoList 
+            schedules={schedules}
+            onEditEvent={handleOpenEditModal}
+            onDeleteEvent={handleDeletePersonalTodo}
+            onDateClick={onDateClick}
+            onAddToCalendar={handleAddTodoToCalendar}
+            onRemoveFromCalendar={handleRemoveTodoFromCalendar}
+          />
+        </Box>
       </Box>
 
       <DailyEvents 
