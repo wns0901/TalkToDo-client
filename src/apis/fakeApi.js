@@ -33,27 +33,27 @@ const dummyMeetingDetails = {
       tasks: '- 로그인 페이지 디자인 개선 (담당: 김범수 과장)\n- 회의록 탭 구현 (담당: 이지원 대리)\n- ToDo & 일정 탭 구현 (담당: 장준영 부장)'
     },
     todos: [
-      // 5월 15일 일정
-      { id: 1, text: '로그인 페이지 디자인 개선', completed: true, assignee: '김범수 과장', dueDate: '2025-05-15' },
-      { id: 2, text: '회의록 탭 구현', completed: false, assignee: '이지원 대리', dueDate: '2025-05-15' },
-      { id: 3, text: 'ToDo & 일정 탭 구현', completed: false, assignee: '장준영 부장', dueDate: '2025-05-15' },
+      // 5월 15일 일정 - 업무
+      { id: 1, text: '로그인 페이지 디자인 개선', completed: true, assignee: '김범수 과장', startDate: '2025-05-13', dueDate: '2025-05-15', type: 'task' },
+      { id: 2, text: '회의록 탭 구현', completed: false, assignee: '이지원 대리', startDate: '2025-05-13', dueDate: '2025-05-15', type: 'task' },
+      { id: 3, text: 'ToDo & 일정 탭 구현', completed: false, assignee: '장준영 부장', startDate: '2025-05-14', dueDate: '2025-05-15', type: 'task' },
       
-      // 5월 17일 일정
-      { id: 4, text: '데이터베이스 설계 검토', completed: false, assignee: '김범수 과장', dueDate: '2025-05-17' },
-      { id: 5, text: 'API 엔드포인트 정의', completed: false, assignee: '장준영 부장', dueDate: '2025-05-17' },
+      // 5월 17일 일정 - todo
+      { id: 4, text: '데이터베이스 설계 검토', completed: false, assignee: '김범수 과장', startDate: '2025-05-15', dueDate: '2025-05-17', type: 'todo' },
+      { id: 5, text: 'API 엔드포인트 정의', completed: false, assignee: '장준영 부장', startDate: '2025-05-16', dueDate: '2025-05-17', type: 'todo' },
       
-      // 5월 20일 일정
-      { id: 6, text: '프론트엔드 프로토타입 개발', completed: false, assignee: '이지원 대리', dueDate: '2025-05-20' },
-      { id: 7, text: '사용자 인증 로직 구현', completed: false, assignee: '김범수 과장', dueDate: '2025-05-20' },
-      { id: 8, text: '회의 기록 저장 기능 개발', completed: false, assignee: '장준영 부장', dueDate: '2025-05-20' },
+      // 5월 20일 일정 - 업무
+      { id: 6, text: '프론트엔드 프로토타입 개발', completed: false, assignee: '이지원 대리', startDate: '2025-05-17', dueDate: '2025-05-20', type: 'task' },
+      { id: 7, text: '사용자 인증 로직 구현', completed: false, assignee: '김범수 과장', startDate: '2025-05-18', dueDate: '2025-05-20', type: 'task' },
+      { id: 8, text: '회의 기록 저장 기능 개발', completed: false, assignee: '장준영 부장', startDate: '2025-05-18', dueDate: '2025-05-20', type: 'task' },
       
-      // 5월 25일 일정
-      { id: 9, text: '통합 테스트 진행', completed: false, assignee: '이지원 대리', dueDate: '2025-05-25' },
-      { id: 10, text: '코드 리뷰', completed: false, assignee: '장준영 부장', dueDate: '2025-05-25' },
+      // 5월 25일 일정 - todo
+      { id: 9, text: '통합 테스트 진행', completed: false, assignee: '이지원 대리', startDate: '2025-05-22', dueDate: '2025-05-25', type: 'todo' },
+      { id: 10, text: '코드 리뷰', completed: false, assignee: '장준영 부장', startDate: '2025-05-22', dueDate: '2025-05-25', type: 'todo' },
       
-      // 5월 30일 일정
-      { id: 11, text: '최종 발표 자료 준비', completed: false, assignee: '김범수 과장', dueDate: '2025-05-30' },
-      { id: 12, text: '배포 계획 수립', completed: false, assignee: '장준영 부장', dueDate: '2025-05-30' }
+      // 5월 30일 일정 - 업무
+      { id: 11, text: '최종 발표 자료 준비', completed: false, assignee: '김범수 과장', startDate: '2025-05-25', dueDate: '2025-05-30', type: 'task' },
+      { id: 12, text: '배포 계획 수립', completed: false, assignee: '장준영 부장', startDate: '2025-05-26', dueDate: '2025-05-30', type: 'task' }
     ]
   },
   2: {
@@ -67,9 +67,9 @@ const dummyMeetingDetails = {
       tasks: '- 음성 인식 API 검토 (담당: 박민준 사원)\n- 알림 시스템 설계 (담당: 김범수 과장)\n- UI/UX 디자인 초안 작성 (담당: 장준영 부장)'
     },
     todos: [
-      { id: 1, text: '음성 인식 API 검토', completed: false, assignee: '박민준 사원', dueDate: '2025-05-17' },
-      { id: 2, text: '알림 시스템 설계', completed: false, assignee: '김범수 과장', dueDate: '2025-05-18' },
-      { id: 3, text: 'UI/UX 디자인 초안 작성', completed: false, assignee: '장준영 부장', dueDate: '2025-05-16' }
+      { id: 1, text: '음성 인식 API 검토', completed: false, assignee: '박민준 사원', startDate: '2025-05-15', dueDate: '2025-05-17', type: 'todo' },
+      { id: 2, text: '알림 시스템 설계', completed: false, assignee: '김범수 과장', startDate: '2025-05-16', dueDate: '2025-05-18', type: 'task' },
+      { id: 3, text: 'UI/UX 디자인 초안 작성', completed: false, assignee: '장준영 부장', startDate: '2025-05-14', dueDate: '2025-05-16', type: 'task' }
     ]
   },
   3: {
@@ -83,14 +83,14 @@ const dummyMeetingDetails = {
       tasks: '- 대시보드 UI 개선 (담당: 최서연 과장)\n- 데이터 시각화 컴포넌트 개발 (담당: 이지원 대리)\n- 성능 최적화 (담당: 장준영 부장)'
     },
     todos: [
-      { id: 1, text: '대시보드 UI 개선', completed: false, assignee: '최서연 과장', dueDate: '2025-05-20' },
-      { id: 2, text: '데이터 시각화 컴포넌트 개발', completed: false, assignee: '이지원 대리', dueDate: '2025-05-22' },
-      { id: 3, text: '성능 최적화', completed: false, assignee: '장준영 부장', dueDate: '2025-05-18' },
-      { id: 4, text: '사용자 테스트 진행', completed: false, assignee: '김범수 과장', dueDate: '2025-05-25' },
-      { id: 5, text: '서비스 배포 준비', completed: false, assignee: '박민준 사원', dueDate: '2025-05-25' },
-      { id: 6, text: 'API 문서화', completed: false, assignee: '이지원 대리', dueDate: '2025-05-28' },
-      { id: 7, text: '기능 재검토 및 확인', completed: false, assignee: '장준영 부장', dueDate: '2025-05-28' },
-      { id: 8, text: '클라이언트 중간 보고서 작성', completed: false, assignee: '최서연 과장', dueDate: '2025-05-30' }
+      { id: 1, text: '대시보드 UI 개선', completed: false, assignee: '최서연 과장', startDate: '2025-05-16', dueDate: '2025-05-20', type: 'task' },
+      { id: 2, text: '데이터 시각화 컴포넌트 개발', completed: false, assignee: '이지원 대리', startDate: '2025-05-18', dueDate: '2025-05-22', type: 'task' },
+      { id: 3, text: '성능 최적화', completed: false, assignee: '장준영 부장', startDate: '2025-05-16', dueDate: '2025-05-18', type: 'todo' },
+      { id: 4, text: '사용자 테스트 진행', completed: false, assignee: '김범수 과장', startDate: '2025-05-22', dueDate: '2025-05-25', type: 'todo' },
+      { id: 5, text: '서비스 배포 준비', completed: false, assignee: '박민준 사원', startDate: '2025-05-22', dueDate: '2025-05-25', type: 'task' },
+      { id: 6, text: 'API 문서화', completed: false, assignee: '이지원 대리', startDate: '2025-05-24', dueDate: '2025-05-28', type: 'todo' },
+      { id: 7, text: '기능 재검토 및 확인', completed: false, assignee: '장준영 부장', startDate: '2025-05-26', dueDate: '2025-05-28', type: 'task' },
+      { id: 8, text: '클라이언트 중간 보고서 작성', completed: false, assignee: '최서연 과장', startDate: '2025-05-27', dueDate: '2025-05-30', type: 'task' }
     ]
   }
 };

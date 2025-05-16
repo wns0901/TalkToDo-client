@@ -121,10 +121,33 @@ const Calendar = ({
               textOverflow: 'ellipsis',
               minHeight: '20px',
               maxWidth: '100%',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              // 할일에서 추가된 일정인 경우 특별한 스타일 적용
+              ...(event.type === 'TODO' && {
+                border: '2px solid #3E1A11',
+                fontWeight: 'bold'
+              })
             }}
           >
-            {event.title}
+            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {event.title}
+            </Box>
+            {event.type === 'TODO' && (
+              <Box 
+                component="span" 
+                sx={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  backgroundColor: '#3E1A11', 
+                  marginLeft: '4px',
+                  flexShrink: 0
+                }}
+              />
+            )}
           </Box>
         ))}
         {/* 2개 이상의 이벤트가 있는 경우 더보기 표시 */}
@@ -168,7 +191,7 @@ const Calendar = ({
     const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
     // 카테고리 필터
-    const categories = ['전체', '회사', '팀', '개인'];
+    const categories = ['전체', '회사', '팀', '개인', 'TODO'];
 
     // 카테고리 필터 행
     const categoryFilters = (

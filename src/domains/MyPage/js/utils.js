@@ -7,6 +7,7 @@ export const CATEGORY_COLORS = {
   '개인': '#87ceeb',
   '회사': '#ff9e6b',
   '팀': '#70b15c',  // 팀 색상을 초록색 계열로 변경
+  'TODO': '#ffd54f', // TODO 색상은 노란색 계열
   'default': '#cccccc' 
 };
 
@@ -25,6 +26,11 @@ export const filterEventsByDate = (events, dateStr, categoryFilter) => {
   // 날짜가 startDate와 endDate 사이에 있는 일정 필터링
   const targetDate = new Date(dateStr);
   let filtered = events.filter(event => {
+    // displayInCalendar가 false인 일정은 제외
+    if (event.displayInCalendar === false) {
+      return false;
+    }
+    
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
     return targetDate >= startDate && targetDate <= endDate;
