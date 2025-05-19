@@ -9,9 +9,11 @@ import Recoder from "./domains/RecodingPage/RecodingPage.jsx";
 import EmailSendingModal from "./domains/MeetingDetailsPage/components/EmailSendingModal.jsx";
 import SetToListModal from "./domains/MeetingDetailsPage/components/SetToListModal.jsx";
 import AppLayout from "./components/AppLayout";
+import LoginContextProvider from "./contexts/LoginContextProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
+    <LoginContextProvider>
       <Routes>
         <Route path="/" element={<AppLayout><MainPage /></AppLayout>} />
         <Route path="/login" element={<LoginPage />} />
@@ -22,5 +24,6 @@ createRoot(document.getElementById("root")).render(
         <Route path="/email-sending" element={<AppLayout><EmailSendingModal /></AppLayout>} />
         <Route path="/set-to-list" element={<AppLayout><SetToListModal /></AppLayout>} />
       </Routes>
+    </LoginContextProvider>
   </BrowserRouter>
 );
