@@ -9,6 +9,7 @@ COPY package*.json ./
 RUN rm -rf node_modules/
 RUN npm ci
 COPY . .
+COPY public ./public
 
 RUN npm run build
 
