@@ -1,6 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import fakeApi from "../apis/fakeApi.js";
-import { Box, Typography, TextField, Paper, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  Paper,
+  Button,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 
 // 초를 mm:ss 형태로 변환하는 함수
@@ -17,6 +25,11 @@ const TotalMeetingComponent = () => {
   const [transcript, setTranscript] = useState([]);
   const [audioFile, setAudioFile] = useState("");
   const [isEdited, setIsEdited] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -60,9 +73,13 @@ const TotalMeetingComponent = () => {
     const result = await fakeApi.updateTranscript(transcript);
     if (result) {
       setIsEdited(false);
-      alert("수정 내용을 저장합니다.");
+      setSnackbar({
+        open: true,
+        message: "수정 내용을 저장합니다.",
+        severity: "success",
+      });
     } else {
-      alert("수정 실패");
+      setSnackbar({ open: true, message: "수정 실패", severity: "error" });
     }
   };
 
@@ -148,12 +165,28 @@ const TotalMeetingComponent = () => {
             px: 3,
             py: 1.2,
             fontWeight: 700,
+            bgcolor: "#3E1A11",
+            "&:hover": { bgcolor: "#5E2A21" },
           }}
           onClick={handleEditClick}
         >
           수정
         </Button>
       )}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

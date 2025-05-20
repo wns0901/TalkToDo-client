@@ -36,7 +36,7 @@ const MainTapComponents = () => {
 
   const handleConvert = () => {
     alert("변환 성공");
-    navigate("/meeting-details");
+    navigate("/meetings/1");
   };
 
   return (
@@ -57,8 +57,21 @@ const MainTapComponents = () => {
       {fileName && (
         <Button
           variant="contained"
-          color="primary"
-          sx={{ mt: 3, px: 5, py: 1.5, fontWeight: 700 }}
+          sx={{
+            mt: 3,
+            px: 5,
+            py: 1.5,
+            fontWeight: 700,
+            background: "#3E1A11",
+            color: "#fff",
+            borderRadius: "8px",
+            boxShadow: "none",
+            "&:hover": {
+              background: "#2A120B",
+              color: "#fff",
+              boxShadow: "none",
+            },
+          }}
           onClick={handleConvert}
         >
           변환
