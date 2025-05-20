@@ -31,8 +31,19 @@ const TotalMeetingComponent = () => {
   // 초 클릭 시 오디오 재생바 위치 이동
   const handleTimeClick = (seconds) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = seconds;
-      audioRef.current.play();
+      if (audioRef.current.readyState > 0) {
+        audioRef.current.currentTime = seconds;
+        audioRef.current.play();
+      } else {
+        audioRef.current.addEventListener(
+          "canplay",
+          () => {
+            audioRef.current.currentTime = seconds;
+            audioRef.current.play();
+          },
+          { once: true }
+        );
+      }
     }
   };
 
@@ -61,12 +72,14 @@ const TotalMeetingComponent = () => {
         sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
         {/* 오디오 재생바 */}
-        <audio
-          ref={audioRef}
-          src={audioFile}
-          controls
-          style={{ width: "50%", margin: "16px auto", display: "block" }}
-        />
+        {audioFile && (
+          <audio
+            ref={audioRef}
+            src={audioFile}
+            controls
+            style={{ width: "50%", margin: "16px auto", display: "block" }}
+          />
+        )}
       </Box>
 
       <Box
@@ -135,7 +148,7 @@ const TotalMeetingComponent = () => {
           }}
           onClick={handleEditClick}
         >
-        수정
+          수정
         </Button>
       )}
     </Box>

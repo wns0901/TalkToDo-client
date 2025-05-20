@@ -31,7 +31,7 @@ export default {
 
   async getAudioFile() {
     // 실제 환경에서는 서버에서 파일을 받아오겠지만, 여기서는 경로 문자열을 반환
-    return "sampleFiles/회의.mp3";
+    return "/sampleFiles/meeting.mp3";
   },
 
   async updateTranscript(transcript) {
