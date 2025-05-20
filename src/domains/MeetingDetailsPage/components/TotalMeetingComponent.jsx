@@ -126,6 +126,9 @@ const TotalMeetingComponent = () => {
               value={item.text}
               sx={{ flex: 1, bgcolor: "white" }}
               onChange={(e) => handleTextChange(e, index)}
+              multiline
+              minRows={1}
+              maxRows={6}
             />
           </Paper>
         ))}

@@ -15,14 +15,16 @@ createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <LoginContextProvider>
       <Routes>
-        <Route path="/" element={<AppLayout><MainPage /></AppLayout>} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/meetings/:meetingId" element={<MeetingDetailsPage />} />
+          <Route path="/my-schedule" element={<MyPage />} />
+          <Route path="/meeting-details" element={<TotalMeetingComponent />} />
+          <Route path="/recoding" element={<Recoder />} />
+          <Route path="/email-sending" element={<EmailSendingModal />} />
+          <Route path="/set-to-list" element={<SetToListModal />} />
+        </Route>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/meetings/:meetingId" element={<AppLayout><MeetingDetailsPage /></AppLayout>} />
-        <Route path="/my-schedule" element={<AppLayout><MyPage /></AppLayout>} />
-        <Route path="/meeting-details" element={<AppLayout><TotalMeetingComponent /></AppLayout>} />
-        <Route path="/recoding" element={<AppLayout><Recoder /></AppLayout>} />
-        <Route path="/email-sending" element={<AppLayout><EmailSendingModal /></AppLayout>} />
-        <Route path="/set-to-list" element={<AppLayout><SetToListModal /></AppLayout>} />
       </Routes>
     </LoginContextProvider>
   </BrowserRouter>
