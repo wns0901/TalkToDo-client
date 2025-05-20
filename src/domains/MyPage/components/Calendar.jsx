@@ -82,9 +82,9 @@ const Calendar = ({
           startIcon={<AddIcon />}
           onClick={handleAddEventClick}
           sx={{ minHeight: 0, py: 0.5 }}
-          aria-label="일정 추가"
+          aria-label="추가"
         >
-          일정 추가
+          추가
         </Button>
       </Box>
     );

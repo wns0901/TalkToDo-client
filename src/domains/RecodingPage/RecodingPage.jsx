@@ -4,6 +4,7 @@ import MicIcon from "@mui/icons-material/Mic";
 import StopIcon from "@mui/icons-material/Stop";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { useNavigate } from "react-router-dom";
 
 const Recoder = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -11,6 +12,7 @@ const Recoder = () => {
   const [audioUrl, setAudioUrl] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const navigate = useNavigate();
 
   // 녹음 시작/정지 토글
   const handleMicClick = async () => {
@@ -65,6 +67,12 @@ const Recoder = () => {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
     }
+  };
+
+  // 변환 버튼 클릭 핸들러
+  const handleConvert = () => {
+    alert("변환 성공");
+    navigate("/meetings/1"); // 필요에 따라 경로 수정
   };
 
   return (
@@ -125,16 +133,36 @@ const Recoder = () => {
 
       {/* 녹음이 끝나면 오디오 재생바 */}
       {audioUrl && (
-        <Box
-          sx={{
-            mt: 5,
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-          }}
-        >
-          <audio src={audioUrl} controls style={{ width: 400 }} />
-        </Box>
+        <>
+          <Box
+            sx={{
+              mt: 5,
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <audio src={audioUrl} controls style={{ width: 400 }} />
+          </Box>
+          {/* 변환 버튼 추가 */}
+          <Box sx={{ mt: 4 }}>
+            <button
+              style={{
+                padding: "12px 32px",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                background: "#3E1A11",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              onClick={handleConvert}
+            >
+              변환
+            </button>
+          </Box>
+        </>
       )}
     </Box>
   );
