@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Container, 
-  Paper, 
-  Typography, 
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Paper,
+  Typography,
   IconButton,
   Breadcrumbs,
   Link as MuiLink,
   Divider,
   CircularProgress,
   Alert,
-  Snackbar
-} from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Link, useNavigate } from 'react-router-dom';
-import MeetingNotesTab from './components/MeetingNotesTab';
-import TodoScheduleTab from './components/TodoScheduleTab';
-import TabBar from '../../components/TabBar';
-import { getMeetingDetails } from '../../apis/fakeApi';
-import { meetingDetailsStyles } from './css/MeetingDetailsPage.styles';
-import TotalMeetingComponent from './components/TotalMeetingComponent';
+  Snackbar,
+} from "@mui/material";
+import HomeIcon from "@mui/icons-material/Home";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Link, useNavigate } from "react-router-dom";
+import MeetingNotesTab from "./components/MeetingNotesTab";
+import TodoScheduleTab from "./components/TodoScheduleTab";
+import TabBar from "../../components/TabBar";
+import { getMeetingDetails } from "../../apis/fakeApi";
+import { meetingDetailsStyles } from "./css/MeetingDetailsPage.styles";
+import TotalMeetingComponent from "./components/TotalMeetingComponent";
 import EmailSendingModal from "./components/EmailSendingModal";
 
 /**
@@ -31,30 +31,29 @@ const MeetingDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [meetingData, setMeetingData] = useState(null);
-  const [snackbar, setSnackbar] = useState({ 
-    open: false, 
-    message: '', 
-    severity: 'info' 
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
   });
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  
+
   const navigate = useNavigate();
   // const { id } = useParams();
-  const meetingId = 1; 
+  const meetingId = 1;
 
   useEffect(() => {
     fetchMeetingDetails(meetingId);
   }, [meetingId]);
 
-
   const fetchMeetingDetails = (id) => {
     setLoading(true);
     getMeetingDetails(id)
-      .then(data => {
+      .then((data) => {
         setMeetingData(data);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
@@ -79,13 +78,13 @@ const MeetingDetailsPage = () => {
    */
   const handleShare = (action) => {
     const shareMessages = {
-      docs: 'Docs 다운로드를 시작합니다.',
-      email: '메일로 회의 자료를 발송합니다.',
-      members: '회의 인원 설정 화면으로 이동합니다.',
-      view: '공유 상태를 확인합니다.',
-      default: '공유 기능을 실행합니다.'
+      docs: "Docs 다운로드를 시작합니다.",
+      email: "메일로 회의 자료를 발송합니다.",
+      members: "회의 인원 설정 화면으로 이동합니다.",
+      view: "공유 상태를 확인합니다.",
+      default: "공유 기능을 실행합니다.",
     };
-    if (action === 'email') {
+    if (action === "email") {
       setEmailModalOpen(true);
       return;
     }
@@ -93,7 +92,7 @@ const MeetingDetailsPage = () => {
     setSnackbar({
       open: true,
       message,
-      severity: 'info'
+      severity: "info",
     });
   };
 
@@ -120,11 +119,20 @@ const MeetingDetailsPage = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={meetingDetailsStyles.container}>
-
-      <Paper sx={meetingDetailsStyles.paper}>
-        <TabBar 
-          value={activeTabIndex} 
+    <Container maxWidth={false} sx={meetingDetailsStyles.container}>
+      <Paper
+        sx={{
+          ...meetingDetailsStyles.paper,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          width: "95%",
+          // maxWidth: "1000px",
+          // minWidth: "1000px",
+          margin: "0 auto",
+        }}
+      >
+        <TabBar
+          value={activeTabIndex}
           onChange={handleTabChange}
           onShare={handleShare}
         />
@@ -132,11 +140,11 @@ const MeetingDetailsPage = () => {
         <TabPanel value={activeTabIndex} index={0}>
           <TotalMeetingComponent />
         </TabPanel>
-        
+
         <TabPanel value={activeTabIndex} index={1}>
           <MeetingNotesTab meetingId={meetingData.id} />
         </TabPanel>
-        
+
         <TabPanel value={activeTabIndex} index={2}>
           <TodoScheduleTab meetingId={meetingData.id} />
         </TabPanel>
@@ -147,9 +155,12 @@ const MeetingDetailsPage = () => {
         autoHideDuration={3000}
         onClose={handleCloseSnackbar}
         message={snackbar.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
-      <EmailSendingModal open={emailModalOpen} onClose={() => setEmailModalOpen(false)} />
+      <EmailSendingModal
+        open={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+      />
     </Container>
   );
 };
@@ -168,9 +179,7 @@ const LoadingView = () => (
  */
 const ErrorView = ({ error }) => (
   <Container maxWidth="lg" sx={meetingDetailsStyles.container}>
-    <Alert severity="error">
-      에러: {error}
-    </Alert>
+    <Alert severity="error">에러: {error}</Alert>
   </Container>
 );
 
@@ -179,9 +188,7 @@ const ErrorView = ({ error }) => (
  */
 const NoDataView = () => (
   <Container maxWidth="lg" sx={meetingDetailsStyles.container}>
-    <Alert severity="info">
-      데이터를 찾을 수 없습니다.
-    </Alert>
+    <Alert severity="info">데이터를 찾을 수 없습니다.</Alert>
   </Container>
 );
 
@@ -199,11 +206,10 @@ const MeetingHeader = ({ title, date, participants, onBack }) => (
           component={Link}
           to="/"
           underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}
+          sx={{ display: "flex", alignItems: "center" }}
           color="inherit"
         >
-          <HomeIcon sx={meetingDetailsStyles.homeIcon} fontSize="inherit" />
-          홈
+          <HomeIcon sx={meetingDetailsStyles.homeIcon} fontSize="inherit" />홈
         </MuiLink>
         <MuiLink
           component={Link}
@@ -224,7 +230,7 @@ const MeetingHeader = ({ title, date, participants, onBack }) => (
     </Box>
 
     <Typography variant="subtitle1" sx={meetingDetailsStyles.subtitle}>
-      {date} | 참여자: {participants.join(', ')}
+      {date} | 참여자: {participants.join(", ")}
     </Typography>
   </Box>
 );
@@ -253,7 +259,7 @@ const TabPanel = ({ children, value, index, ...other }) => (
     hidden={value !== index}
     id={`meeting-tabpanel-${index}`}
     aria-labelledby={`meeting-tab-${index}`}
-    style={{ display: value === index ? 'block' : 'none', width: '100%' }}
+    style={{ display: value === index ? "block" : "none", width: "100%" }}
     {...other}
   >
     {children}
