@@ -13,8 +13,6 @@ import {
 import ShareIcon from '@mui/icons-material/Share';
 import DescriptionIcon from '@mui/icons-material/Description';
 import EmailIcon from '@mui/icons-material/Email';
-import PeopleIcon from '@mui/icons-material/People';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import { tabBarStyles } from './TabBar.styles';
 
 /**
@@ -31,17 +29,6 @@ const SHARE_MENU_ITEMS = [
     label: '메일로 발송',
     icon: <EmailIcon fontSize="small" />
   },
-  { divider: true },
-  {
-    id: 'members',
-    label: '회의 인원 설정',
-    icon: <PeopleIcon fontSize="small" />
-  },
-  {
-    id: 'view',
-    label: '공유 상태 보기',
-    icon: <VisibilityIcon fontSize="small" />
-  }
 ];
 
 /**
