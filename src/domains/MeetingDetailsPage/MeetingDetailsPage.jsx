@@ -4,17 +4,10 @@ import {
   Container,
   Paper,
   Typography,
-  IconButton,
-  Breadcrumbs,
-  Link as MuiLink,
-  Divider,
   CircularProgress,
   Alert,
   Snackbar,
 } from "@mui/material";
-import HomeIcon from "@mui/icons-material/Home";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link, useNavigate } from "react-router-dom";
 import MeetingNotesTab from "./components/MeetingNotesTab";
 import TodoScheduleTab from "./components/TodoScheduleTab";
 import TabBar from "../../components/TabBar";
@@ -38,8 +31,6 @@ const MeetingDetailsPage = () => {
   });
   const [emailModalOpen, setEmailModalOpen] = useState(false);
 
-  const navigate = useNavigate();
-  // const { id } = useParams();
   const meetingId = 1;
 
   useEffect(() => {
@@ -64,13 +55,6 @@ const MeetingDetailsPage = () => {
    */
   const handleTabChange = (event, newValue) => {
     setActiveTabIndex(newValue);
-  };
-
-  /**
-   * 뒤로 가기 핸들러
-   */
-  const handleBack = () => {
-    navigate(-1);
   };
 
   /**
@@ -126,8 +110,6 @@ const MeetingDetailsPage = () => {
           maxHeight: "90vh",
           overflowY: "auto",
           width: "95%",
-          // maxWidth: "1000px",
-          // minWidth: "1000px",
           margin: "0 auto",
         }}
       >
@@ -190,64 +172,6 @@ const NoDataView = () => (
   <Container maxWidth="lg" sx={meetingDetailsStyles.container}>
     <Alert severity="info">데이터를 찾을 수 없습니다.</Alert>
   </Container>
-);
-
-/**
- * 회의 헤더 컴포넌트
- */
-const MeetingHeader = ({ title, date, participants, onBack }) => (
-  <Box sx={meetingDetailsStyles.header}>
-    <Box sx={meetingDetailsStyles.breadcrumbs}>
-      <IconButton onClick={onBack} sx={meetingDetailsStyles.backButton}>
-        <ArrowBackIcon />
-      </IconButton>
-      <Breadcrumbs aria-label="breadcrumb">
-        <MuiLink
-          component={Link}
-          to="/"
-          underline="hover"
-          sx={{ display: "flex", alignItems: "center" }}
-          color="inherit"
-        >
-          <HomeIcon sx={meetingDetailsStyles.homeIcon} fontSize="inherit" />홈
-        </MuiLink>
-        <MuiLink
-          component={Link}
-          to="/meetings"
-          underline="hover"
-          color="inherit"
-        >
-          회의 목록
-        </MuiLink>
-        <Typography color="text.primary">{title}</Typography>
-      </Breadcrumbs>
-    </Box>
-
-    <Box sx={meetingDetailsStyles.titleContainer}>
-      <Typography variant="h4" component="h1" sx={meetingDetailsStyles.title}>
-        {title}
-      </Typography>
-    </Box>
-
-    <Typography variant="subtitle1" sx={meetingDetailsStyles.subtitle}>
-      {date} | 참여자: {participants.join(", ")}
-    </Typography>
-  </Box>
-);
-
-/**
- * 회의 정보 탭 컴포넌트
- */
-const MeetingInfoTab = () => (
-  <Box sx={meetingDetailsStyles.tabContent}>
-    <Typography variant="h5" component="h2" sx={meetingDetailsStyles.tabTitle}>
-      회의 정보
-    </Typography>
-    <Divider sx={meetingDetailsStyles.divider} />
-    <Typography variant="body1">
-      이 탭에는 회의 정보와 녹음 내용이 표시됩니다.
-    </Typography>
-  </Box>
 );
 
 /**
