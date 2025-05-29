@@ -95,27 +95,23 @@ const SetToListModal = ({ setToList, onClose }) => {
 
       {/* 체크박스 리스트 */}
       <List>
-        {filteredPeople.map((person, idx) => {
-          // peopleList의 실제 인덱스 찾기
-          const realIdx = peopleList.findIndex((p) => p === person);
-          return (
-            <ListItem key={person.name} disablePadding>
-              <ListItemText
-                primary={
-                  person.position
-                    ? `${person.name} ${person.position}`
-                    : person.name
-                }
+        {filteredPeople.map((person) => (
+          <ListItem key={person.id} disablePadding>
+            <ListItemText
+              primary={
+                person.position
+                  ? `${person.name} ${person.position}`
+                  : person.name
+              }
+            />
+            <ListItemSecondaryAction>
+              <Checkbox
+                checked={checkedList[person.id - 1] || false}
+                onChange={() => handleToggle(person.id - 1)}
               />
-              <ListItemSecondaryAction>
-                <Checkbox
-                  checked={checkedList[realIdx] || false}
-                  onChange={() => handleToggle(realIdx)}
-                />
-              </ListItemSecondaryAction>
-            </ListItem>
-          );
-        })}
+            </ListItemSecondaryAction>
+          </ListItem>
+        ))}
       </List>
       <Button
         variant="contained"

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Box, Container, Paper } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import { format, addMonths, subMonths, addDays } from "date-fns";
 import { myPageStyles } from "./css/MyPage.styles";
 
@@ -10,7 +9,6 @@ import TodoList from "./components/TodoList";
 import DailyEvents from "./components/DailyEvents";
 import {
   EventModal,
-  CategoryModal,
   AddEventModal,
   EditEventModal,
 } from "./components/Modals";
@@ -59,8 +57,6 @@ const MyPage = () => {
 
   // 선택된 날짜의 일정
   const [filteredEvents, setFilteredEvents] = useState([]);
-
-  const navigate = useNavigate();
 
   // 일정 데이터 로드
   useEffect(() => {
