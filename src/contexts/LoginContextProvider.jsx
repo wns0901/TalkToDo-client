@@ -84,29 +84,35 @@ const LoginContextProvider = ({ children }) => {
     try {
       const response = await auth.login(username, password);
       const { data, status, headers } = response;
-      const { authorization } = headers;
+      
+      // 응답 헤더에서 토큰 확인
+      const authorization = headers?.authorization;
+      if (!authorization) {
+        throw new Error("인증 토큰이 없습니다.");
+      }
 
       const accessToken = authorization.replace("Bearer ", "");
 
       console.log(`
         -- login 요청응답 --
-        data : ${data}
+        data : ${JSON.stringify(data)}
         status : ${status}
-        headers : ${headers}
+        headers : ${JSON.stringify(headers)}
         jwt : ${accessToken}
       `);
 
-      if (status === 200) {
-        Cookies.set("accessToken", accessToken);
+      // 토큰 저장
+      Cookies.set("accessToken", accessToken);
 
-        loginCheck();
+      // 사용자 정보 설정
+      loginSetting(data, accessToken);
 
-        Swal.alert("로그인 성공", "메인화면으로 이동합니다.", "success", () => {
-          navigate("/");
-        });
-      }
+      Swal.alert("로그인 성공", "메인화면으로 이동합니다.", "success", () => {
+        navigate("/");
+      });
     } catch (error) {
-      console.error(`로그인 error: ${error}`);
+      console.error(`로그인 error:`, error);
+      Swal.alert("로그인 실패", "아이디와 비밀번호를 확인해주세요.", "error");
     }
   };
 

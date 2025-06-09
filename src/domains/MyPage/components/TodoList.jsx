@@ -24,6 +24,7 @@ import {
   Grid,
   Tooltip,
   Menu,
+  ListItemSecondaryAction,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -35,17 +36,18 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { myPageStyles } from "../css/MyPage.styles";
 import { format } from "date-fns";
+import api from "../../../apis/api";
 
 /**
  * 개인 할일 목록을 표시하는 컴포넌트
  */
 const TodoList = ({
-  schedules,
+  schedules = [],
   onEditEvent,
   onDeleteEvent,
   onDateClick,
-  onAddToCalendar,
   onRemoveFromCalendar,
+  todos = [],
 }) => {
   const [completedTodos, setCompletedTodos] = useState([]);
   const [activeTodoModalOpen, setActiveTodoModalOpen] = useState(false);
@@ -66,6 +68,9 @@ const TodoList = ({
   // 더보기 메뉴 상태
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [menuTodoId, setMenuTodoId] = useState(null);
+
+  const [editingTodo, setEditingTodo] = useState(null);
+  const [editText, setEditText] = useState("");
 
   /**
    * 할일 항목 클릭 시 해당 날짜로 이동하는 핸들러
@@ -98,17 +103,6 @@ const TodoList = ({
   const handleRestoreTodo = (todo, e) => {
     e.stopPropagation();
     setCompletedTodos((prev) => prev.filter((item) => item.id !== todo.id));
-  };
-
-  /**
-   * 일정에 추가 핸들러
-   * @param {Object} todo - 할일 객체
-   */
-  const handleAddToCalendar = (todo, e) => {
-    e.stopPropagation();
-    if (onAddToCalendar) {
-      onAddToCalendar(todo);
-    }
   };
 
   /**
@@ -187,45 +181,56 @@ const TodoList = ({
   /**
    * 새 할일 저장 핸들러
    */
-  const handleSaveTodo = () => {
+  const handleSaveTodo = async () => {
     if (!newTodo.title.trim()) {
       alert("할일 제목을 입력해주세요.");
       return;
     }
 
-    // 새 할일 객체 생성
-    const todoToAdd = {
-      ...newTodo,
-      id: Date.now(),
-      date: newTodo.startDate,
-    };
+    try {
+      await api.post("/api/todos", {
+        title: newTodo.title,
+        completed: false,
+      });
+      
+      setNewTodo("");
+      // 부모 컴포넌트에서 todos 상태를 업데이트하도록 콜백 추가 필요
+    } catch (error) {
+      console.error("할 일 추가 실패:", error);
+    }
+  };
 
-    // 기존 일정에 추가
-    const updatedSchedules = [...schedules, todoToAdd];
+  const handleAddToCalendar = async (todoId) => {
+    try {
+      const todo = todos.find(t => t.id === todoId);
+      if (!todo) return;
 
-    // 로컬 스토리지에 저장
-    localStorage.setItem("schedules", JSON.stringify(updatedSchedules));
-
-    // 모달 닫기
-    handleCloseAddTodoModal();
-
-    // 페이지 리로드하여 새 할일 표시
-    window.location.reload();
+      await api.post("/api/schedules", {
+        title: todo.title,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        category: "TODO",
+        type: "TODO",
+      });
+      // 부모 컴포넌트에서 schedules 상태를 업데이트하도록 콜백 추가 필요
+    } catch (error) {
+      console.error("캘린더 추가 실패:", error);
+    }
   };
 
   // 개인 카테고리 일정만 필터링하고 날짜순으로 정렬
-  const personalTodos = schedules
+  const personalTodos = (schedules || [])
     .filter(
       (event) =>
-        event.type === "개인" &&
-        (event.isTodo === true || event.isTodo === undefined)
+        event?.type === "개인" &&
+        (event?.isTodo === true || event?.isTodo === undefined)
     )
-    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    .sort((a, b) => new Date(a?.startDate) - new Date(b?.startDate));
 
   // 완료되지 않은 할일 목록
-  const activeTodos = personalTodos.filter(
-    (todo) => !completedTodos.find((item) => item.id === todo.id)
-  );
+  const activeTodos = personalTodos?.filter(
+    (todo) => !completedTodos?.find((item) => item?.id === todo?.id)
+  ) || [];
 
   /**
    * 할일이 이미 일정표에 추가되었는지 확인하는 함수
@@ -266,118 +271,131 @@ const TodoList = ({
       onClick={() => handleTodoClick(todo)}
     >
       <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-        <Checkbox
-          checked={isCompleted}
-          sx={myPageStyles.todoCheckbox}
-          onClick={(e) => handleToggleComplete(todo, e)}
-        />
-        <ListItemText
-          primary={
-            <Box
-              component="span"
-              sx={isCompleted ? { textDecoration: "line-through" } : {}}
-            >
-              {todo.title}
-            </Box>
-          }
-          sx={{
-            "& .MuiTypography-root": {
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-          }}
-        />
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          {!isCompleted && (
-            <>
-              {!isTodoAddedToCalendar(todo.id) ? (
+        {editingTodo === todo.id ? (
+          <TextField
+            fullWidth
+            size="small"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleEditTodo(todo.id)}
+            autoFocus
+          />
+        ) : (
+          <>
+            <Checkbox
+              checked={isCompleted}
+              sx={myPageStyles.todoCheckbox}
+              onChange={(e) => handleToggleComplete(todo, e)}
+            />
+            <ListItemText
+              primary={
+                <Box
+                  component="span"
+                  sx={isCompleted ? { textDecoration: "line-through" } : {}}
+                >
+                  {todo.title}
+                </Box>
+              }
+              sx={{
+                "& .MuiTypography-root": {
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                },
+              }}
+            />
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              {!isCompleted && (
+                <>
+                  {!isTodoAddedToCalendar(todo.id) ? (
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCalendar(todo.id);
+                      }}
+                      sx={{ color: "#666" }}
+                      aria-label="일정에 추가"
+                    >
+                      <CalendarMonthIcon fontSize="small" />
+                    </IconButton>
+                  ) : (
+                    <Tooltip title="일정에서 제거">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFromCalendar(todo, e);
+                        }}
+                        sx={{ color: "#f44336" }}
+                        aria-label="일정에서 제거"
+                      >
+                        <CalendarMonthIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuOpen(e, todo.id)}
+                    sx={{ color: "#666" }}
+                    aria-label="더보기"
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                  <Menu
+                    anchorEl={menuAnchorEl}
+                    open={Boolean(menuAnchorEl) && menuTodoId === todo.id}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditEvent(todo);
+                        handleMenuClose();
+                      }}
+                    >
+                      <EditIcon fontSize="small" sx={{ mr: 1 }} /> 수정
+                    </MenuItem>
+                    <MenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteEvent(todo.id);
+                        handleMenuClose();
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> 삭제
+                    </MenuItem>
+                  </Menu>
+                </>
+              )}
+              {isCompleted ? (
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleRestoreTodo(todo, e)}
+                  sx={{ color: "#666" }}
+                  aria-label="할일 복구"
+                >
+                  <RestoreIcon fontSize="small" />
+                </IconButton>
+              ) : (
                 <IconButton
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToCalendar(todo, e);
+                    onDeleteEvent(todo.id);
                   }}
                   sx={{ color: "#666" }}
-                  aria-label="일정에 추가"
+                  aria-label="할일 삭제"
                 >
-                  <CalendarMonthIcon fontSize="small" />
+                  <DeleteIcon fontSize="small" />
                 </IconButton>
-              ) : (
-                <Tooltip title="일정에서 제거">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveFromCalendar(todo, e);
-                    }}
-                    sx={{ color: "#f44336" }}
-                    aria-label="일정에서 제거"
-                  >
-                    <CalendarMonthIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               )}
-              <IconButton
-                size="small"
-                onClick={(e) => handleMenuOpen(e, todo.id)}
-                sx={{ color: "#666" }}
-                aria-label="더보기"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-              <Menu
-                anchorEl={menuAnchorEl}
-                open={Boolean(menuAnchorEl) && menuTodoId === todo.id}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditEvent(todo);
-                    handleMenuClose();
-                  }}
-                >
-                  <EditIcon fontSize="small" sx={{ mr: 1 }} /> 수정
-                </MenuItem>
-                <MenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteEvent(todo.id);
-                    handleMenuClose();
-                  }}
-                >
-                  <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> 삭제
-                </MenuItem>
-              </Menu>
-            </>
-          )}
-          {isCompleted ? (
-            <IconButton
-              size="small"
-              onClick={(e) => handleRestoreTodo(todo, e)}
-              sx={{ color: "#666" }}
-              aria-label="할일 복구"
-            >
-              <RestoreIcon fontSize="small" />
-            </IconButton>
-          ) : (
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteEvent(todo.id);
-              }}
-              sx={{ color: "#666" }}
-              aria-label="할일 삭제"
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Box>
+            </Box>
+          </>
+        )}
       </Box>
       <Box sx={{ pl: 4, mt: 1, fontSize: "0.8rem", color: "#666" }}>
         <Box component="span" sx={{ mr: 2 }}>
@@ -397,6 +415,19 @@ const TodoList = ({
   const handleMenuClose = () => {
     setMenuAnchorEl(null);
     setMenuTodoId(null);
+  };
+
+  const handleEditTodo = async (todoId) => {
+    try {
+      await api.patch(`/api/todos/${todoId}`, {
+        title: editText,
+      });
+      setEditingTodo(null);
+      setEditText("");
+      // 부모 컴포넌트에서 todos 상태를 업데이트하도록 콜백 추가 필요
+    } catch (error) {
+      console.error("할 일 수정 실패:", error);
+    }
   };
 
   return (
@@ -614,7 +645,7 @@ const TodoList = ({
                             startIcon={<CalendarMonthIcon />}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAddToCalendar(todo, e);
+                              handleAddToCalendar(todo.id);
                             }}
                           >
                             일정에 추가
