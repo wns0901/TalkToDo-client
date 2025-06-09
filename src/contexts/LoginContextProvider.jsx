@@ -76,15 +76,17 @@ const LoginContextProvider = ({ children }) => {
 
       const accessToken = authorization.replace("Bearer ", "");
 
-      if (status === 200) {
-        Cookies.set("accessToken", accessToken);
+      // 토큰 저장
+      Cookies.set("accessToken", accessToken);
 
-        loginCheck();
+      // 사용자 정보 설정
+      loginSetting(data, accessToken);
 
         navigate("/");
       }
     } catch (error) {
-      console.error(`로그인 error: ${error}`);
+      console.error(`로그인 error:`, error);
+      Swal.alert("로그인 실패", "아이디와 비밀번호를 확인해주세요.", "error");
     }
   };
 
