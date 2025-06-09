@@ -21,7 +21,7 @@ const LoginForm = () => {
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(username, password, rememberMe);
+    login(username, password);
   };
 
   return (
