@@ -9,6 +9,34 @@ const baseApi = axios.create({
   },
 });
 
+
+// 요청 인터셉터
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+
 // API 응답 데이터 변환 함수
 const transformResponse = (response) => {
   // 응답 데이터가 있는 경우에만 변환
@@ -109,3 +137,4 @@ const api = {
 };
 
 export default api; 
+

@@ -13,17 +13,22 @@ LoginContext.displayName = "LoginContextName";
 const LoginContextProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const { isLoginData, userInfoData, rolesData } = JSON.parse(
-    localStorage.getItem("data")
-  ) || { isLoginData: null, userInfoData: null, rolesData: null };
+  // localStorage 데이터 파싱 시 에러 처리 추가
+  const getLocalStorageData = () => {
+    try {
+      const data = localStorage.getItem("data");
+      return data ? JSON.parse(data) : { isLoginData: null, userInfoData: null, rolesData: null };
+    } catch (error) {
+      console.error("localStorage 데이터 파싱 실패:", error);
+      return { isLoginData: null, userInfoData: null, rolesData: null };
+    }
+  };
+
+  const { isLoginData, userInfoData, rolesData } = getLocalStorageData();
 
   const [isLogin, setIsLogin] = useState(isLoginData || false);
-
   const [userInfo, setUserInfo] = useState(userInfoData || {});
-
-  const [roles, setRoles] = useState(
-    rolesData || { isMember: false, isAdmin: false }
-  );
+  const [roles, setRoles] = useState(rolesData || { isMember: false, isAdmin: false });
 
   const loginCheck = async (isAuthPage = false) => {
     const accessToken = Cookies.get("accessToken");
@@ -34,7 +39,7 @@ const LoginContextProvider = ({ children }) => {
     if (!accessToken) {
       console.log(`쿠키에 JWT(accessToken) 이 없음`);
       logoutSetting();
-      navigate("/login");
+      if (!isAuthPage) navigate("/login");
       return;
     }
 
@@ -43,25 +48,29 @@ const LoginContextProvider = ({ children }) => {
 
     try {
       response = await auth.userInfo();
+      if (!response) {
+        console.error("사용자 정보 요청 실패");
+        logoutSetting();
+        if (!isAuthPage) navigate("/login");
+        return;
+      }
+
+      data = response.data;
+      console.log(`data: ${data}`);
+
+      if (data === "UNAUTHORIZED" || response.status === 401) {
+        console.error("JWT(accessToken)이 만료되었거나 인증에 실패하였습니다");
+        logoutSetting();
+        if (!isAuthPage) navigate("/login");
+        return;
+      }
+
+      loginSetting(data, accessToken);
     } catch (error) {
-      console.log(`error: ${error}`);
-      console.log(`status: ${response.status}`);
-      return;
+      console.error("사용자 정보 요청 중 에러 발생:", error);
+      logoutSetting();
+      if (!isAuthPage) navigate("/login");
     }
-
-    if (!response) return;
-
-    console.log(`JWT(accessToken) 으로 사용자 인증 정보 요청 성공.`);
-
-    data = response.data;
-    console.log(`data: ${data}`);
-
-    if (data === "UNAUTHORIZED" || response.status === 401) {
-      console.error("JWT(accessToken)이 만료되었거나 인증에 실패하였습니다");
-      return;
-    }
-
-    loginSetting(data, accessToken);
   };
 
   useEffect(() => {
@@ -71,7 +80,7 @@ const LoginContextProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await auth.login(username, password);
-      const { status, headers } = response;
+      const { headers } = response;
       const { authorization } = headers;
 
       const accessToken = authorization.replace("Bearer ", "");
@@ -79,10 +88,22 @@ const LoginContextProvider = ({ children }) => {
       // 토큰 저장
       Cookies.set("accessToken", accessToken);
 
-      // 사용자 정보 설정
-      loginSetting(data, accessToken);
+      try {
+        // JWT 토큰 payload에서 사용자 정보 추출
+        const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
+        const userData = {
+          id: tokenPayload.id,
+          username: tokenPayload.username,
+          roles: tokenPayload.roles || [] // roles 정보 추가
+        };
+
+        // 사용자 정보 설정
+        loginSetting(userData, accessToken);
 
         navigate("/");
+      } catch (error) {
+        console.error("JWT 토큰 파싱 실패:", error);
+        Swal.alert("로그인 실패", "토큰 처리 중 오류가 발생했습니다.", "error");
       }
     } catch (error) {
       console.error(`로그인 error:`, error);
@@ -111,13 +132,9 @@ const LoginContextProvider = ({ children }) => {
   };
 
   const loginSetting = (userData, accessToken) => {
-    const { id, username } = userData;
+    const { id, username, roles: userRoles = [] } = userData;
 
-    console.log(`
-      loginSetting()
-      id : ${id}
-      username : ${username}
-    `);
+    console.log(`\n      loginSetting()\n      id : ${id}\n      username : ${username}\n      roles : ${userRoles}\n    `);
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
@@ -126,7 +143,12 @@ const LoginContextProvider = ({ children }) => {
     const updateUserInfo = { id, username };
     setUserInfo(updateUserInfo);
 
-    const updatedRoles = { isMember: false, isAdmin: false };
+    // roles 정보 업데이트
+    const updatedRoles = {
+      isMember: userRoles.includes("MEMBER"),
+      isAdmin: userRoles.includes("ADMIN")
+    };
+    setRoles(updatedRoles);
 
     localStorage.setItem(
       "data",
@@ -141,6 +163,7 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
+    setRoles({ isMember: false, isAdmin: false });
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
@@ -158,3 +181,11 @@ const LoginContextProvider = ({ children }) => {
 };
 
 export default LoginContextProvider;
+
+export const useLogin = () => {
+  const context = React.useContext(LoginContext);
+  if (!context) {
+    throw new Error("useLogin must be used within a LoginContextProvider");
+  }
+  return context;
+};
