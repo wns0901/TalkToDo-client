@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
-import api from "../apis/api";
+import api from "../apis/baseApi";
 import * as auth from "../apis/auth";
 
 import * as Swal from "../apis/alert";
@@ -68,38 +68,20 @@ const LoginContextProvider = ({ children }) => {
     loginCheck();
   }, []);
 
-  const login = async (username, password, rememberId) => {
-    console.log(`
-      로그인 요청
-      login(username:${username}, password:${password}, rememberId: ${rememberId});
-    `);
-
-    if (rememberId) Cookies.set("rememberId", username);
-    else Cookies.remove("rememberId");
-
+  const login = async (username, password) => {
     try {
       const response = await auth.login(username, password);
-      const { data, status, headers } = response;
+      const { status, headers } = response;
       const { authorization } = headers;
 
       const accessToken = authorization.replace("Bearer ", "");
-
-      console.log(`
-        -- login 요청응답 --
-        data : ${data}
-        status : ${status}
-        headers : ${headers}
-        jwt : ${accessToken}
-      `);
 
       if (status === 200) {
         Cookies.set("accessToken", accessToken);
 
         loginCheck();
 
-        Swal.alert("로그인 성공", "메인화면으로 이동합니다.", "success", () => {
-          navigate("/");
-        });
+        navigate("/");
       }
     } catch (error) {
       console.error(`로그인 error: ${error}`);
@@ -127,29 +109,22 @@ const LoginContextProvider = ({ children }) => {
   };
 
   const loginSetting = (userData, accessToken) => {
-    const { id, username, role } = userData;
+    const { id, username } = userData;
 
     console.log(`
       loginSetting()
       id : ${id}
       username : ${username}
-      role : ${role}
     `);
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
     setIsLogin(true);
 
-    const updateUserInfo = { id, username, role };
+    const updateUserInfo = { id, username };
     setUserInfo(updateUserInfo);
 
     const updatedRoles = { isMember: false, isAdmin: false };
-
-    role.split(",").forEach((role) => {
-      if (role === "ROLE_MEMBER") updatedRoles.isMember = true;
-      if (role === "ROLE_ADMIN") updatedRoles.isAdmin = true;
-    });
-    setRoles(updatedRoles);
 
     localStorage.setItem(
       "data",
@@ -164,7 +139,6 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
-    setRoles(null);
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
