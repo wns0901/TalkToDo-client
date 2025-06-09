@@ -39,15 +39,16 @@ const Calendar = ({
    * 현재 선택된 필터를 기반으로 일정 타입을 설정
    */
   const handleAddEventClick = () => {
+    const defaultCategory = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : '개인';
+    const defaultType = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : '개인';
     const defaultEvent = {
       title: '',
       date: format(selectedDate, 'yyyy-MM-dd'),
       startDate: format(selectedDate, 'yyyy-MM-dd'),
       endDate: format(selectedDate, 'yyyy-MM-dd'),
-      category: categoryFilter !== '전체' ? categoryFilter : '개인',
-      type: categoryFilter !== '전체' ? categoryFilter : '개인'
+      category: defaultCategory,
+      type: defaultType,
     };
-    
     onAddEvent(defaultEvent);
   };
 

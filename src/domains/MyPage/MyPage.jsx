@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import { format, addMonths, subMonths, addDays } from "date-fns";
 import { myPageStyles } from "./css/MyPage.styles";
+import api from "../../apis/baseApi";
+import { useLogin } from "../../contexts/LoginContextProvider";
+import Cookies from "js-cookie";
+import * as todoApi from "../../apis/todo";
+import * as scheduleApi from "../../apis/schedule";
+import * as categoryApi from "../../apis/category";
+import { useNavigate } from "react-router-dom";
 
 // 분리된 컴포넌트들 가져오기
 import Calendar from "./components/Calendar";
@@ -11,6 +18,7 @@ import {
   EventModal,
   AddEventModal,
   EditEventModal,
+  CategoryModal,
 } from "./components/Modals";
 import { PageHeader, LoadingView, ErrorView } from "./components/Common";
 import { filterEventsByDate } from "./js/utils";
@@ -27,14 +35,14 @@ const MyPage = () => {
   const [currentMonth, setCurrentMonth] = useState(currentMonthDate);
   const [selectedDate, setSelectedDate] = useState(today);
   const [loading, setLoading] = useState(true);
-  const [error] = useState(null);
+  const [error, setError] = useState(null);
   const [schedules, setSchedules] = useState([]);
 
   // 필터 상태
   const [categoryFilter, setCategoryFilter] = useState("전체");
 
   // 카테고리 관리
-  const [categories] = useState(["전체", "회사", "팀", "개인", "TODO"]);
+  const [categories, setCategories] = useState([]);
 
   // 모달 상태
   const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -49,303 +57,62 @@ const MyPage = () => {
     endDate: format(today, "yyyy-MM-dd"),
     category: "개인",
     type: "개인",
+    startTime: "09:00",  // 기본 시작 시간
+    endTime: "10:00"     // 기본 종료 시간
   });
 
   // 일정 수정 모달 상태
   const [editEventModalOpen, setEditEventModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
 
+  // 카테고리 모달 상태 추가
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+
   // 선택된 날짜의 일정
   const [filteredEvents, setFilteredEvents] = useState([]);
 
-  // 일정 데이터 로드
-  useEffect(() => {
-    // 저장된 일정 데이터 확인
-    const savedSchedules = localStorage.getItem("schedules");
+  const { userInfo, loginCheck } = useLogin();
+  const navigate = useNavigate();
 
-    if (savedSchedules) {
-      // 저장된 데이터가 있으면 불러오기
-      try {
-        const parsedSchedules = JSON.parse(savedSchedules);
-        setSchedules(parsedSchedules);
-        setLoading(false);
-      } catch (error) {
-        console.error("저장된 일정 데이터를 불러오는데 실패했습니다:", error);
-        loadDummyData();
-      }
-    } else {
-      // 저장된 데이터가 없으면 더미 데이터 로드
-      loadDummyData();
-    }
-  }, []);
-
-  // 더미 데이터 로드 함수
-  const loadDummyData = () => {
-    // 현재 날짜와 달 정보 얻기
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-11 (0: 1월, 11: 12월)
-    const formattedMonth = String(currentMonth + 1).padStart(2, "0");
-
-    // 날짜 생성 헬퍼 함수
-    const getDateStr = (day) =>
-      `${currentYear}-${formattedMonth}-${String(day).padStart(2, "0")}`;
-
-    // 임시 데이터 생성
-    const dummySchedules = [
-      // 회사 일정
-      {
-        id: 1,
-        date: getDateStr(5),
-        startDate: getDateStr(5),
-        endDate: getDateStr(5),
-        title: "월간 팀 회의",
-        category: "회사",
-        type: "회사",
-        displayInCalendar: true,
-      },
-      {
-        id: 2,
-        date: getDateStr(12),
-        startDate: getDateStr(12),
-        endDate: getDateStr(12),
-        title: "분기별 실적 보고 미팅",
-        category: "회사",
-        type: "회사",
-        displayInCalendar: true,
-      },
-      {
-        id: 3,
-        date: getDateStr(20),
-        startDate: getDateStr(20),
-        endDate: getDateStr(22),
-        title: "신규 프로젝트 기획",
-        category: "회사",
-        type: "회사",
-        displayInCalendar: true,
-      },
-      {
-        id: 4,
-        date: getDateStr(25),
-        startDate: getDateStr(25),
-        endDate: getDateStr(25),
-        title: "경영진 미팅",
-        category: "회사",
-        type: "회사",
-        displayInCalendar: true,
-      },
-
-      // 팀 일정
-      {
-        id: 5,
-        date: getDateStr(7),
-        startDate: getDateStr(7),
-        endDate: getDateStr(7),
-        title: "팀 주간 스크럼",
-        category: "팀",
-        type: "팀",
-        displayInCalendar: true,
-      },
-      {
-        id: 6,
-        date: getDateStr(14),
-        startDate: getDateStr(14),
-        endDate: getDateStr(14),
-        title: "팀 주간 스크럼",
-        category: "팀",
-        type: "팀",
-        displayInCalendar: true,
-      },
-      {
-        id: 7,
-        date: getDateStr(21),
-        startDate: getDateStr(21),
-        endDate: getDateStr(21),
-        title: "팀 주간 스크럼",
-        category: "팀",
-        type: "팀",
-        displayInCalendar: true,
-      },
-      {
-        id: 8,
-        date: getDateStr(28),
-        startDate: getDateStr(28),
-        endDate: getDateStr(28),
-        title: "팀 프로젝트 리뷰",
-        category: "팀",
-        type: "팀",
-        displayInCalendar: true,
-      },
-
-      // 개인 일정 (할일) - 캘린더에 표시 안됨
-      {
-        id: 101,
-        date: getDateStr(4),
-        startDate: getDateStr(4),
-        endDate: getDateStr(4),
-        title: "주간 업무 계획 작성",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 102,
-        date: getDateStr(6),
-        startDate: getDateStr(6),
-        endDate: getDateStr(7),
-        title: "프로젝트 문서 정리",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 103,
-        date: getDateStr(10),
-        startDate: getDateStr(10),
-        endDate: getDateStr(10),
-        title: "이메일 정리하기",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 104,
-        date: getDateStr(13),
-        startDate: getDateStr(13),
-        endDate: getDateStr(15),
-        title: "웹 개발 강의 수강",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 105,
-        date: getDateStr(18),
-        startDate: getDateStr(18),
-        endDate: getDateStr(18),
-        title: "월간 개인 목표 점검",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 106,
-        date: format(today, "yyyy-MM-dd"),
-        startDate: format(today, "yyyy-MM-dd"),
-        endDate: format(today, "yyyy-MM-dd"),
-        title: "오늘의 할일 작성",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-      {
-        id: 107,
-        date: format(addDays(today, 1), "yyyy-MM-dd"),
-        startDate: format(addDays(today, 1), "yyyy-MM-dd"),
-        endDate: format(addDays(today, 2), "yyyy-MM-dd"),
-        title: "프로젝트 자료 조사",
-        category: "개인",
-        type: "개인",
-        isTodo: true,
-        displayInCalendar: false,
-      },
-
-      // 개인 일정 (일반 일정)
-      {
-        id: 201,
-        date: getDateStr(8),
-        startDate: getDateStr(8),
-        endDate: getDateStr(8),
-        title: "영어 스터디",
-        category: "개인",
-        type: "개인",
-        isTodo: false,
-        displayInCalendar: true,
-      },
-      {
-        id: 202,
-        date: getDateStr(15),
-        startDate: getDateStr(15),
-        endDate: getDateStr(15),
-        title: "영어 스터디",
-        category: "개인",
-        type: "개인",
-        isTodo: false,
-        displayInCalendar: true,
-      },
-      {
-        id: 203,
-        date: getDateStr(22),
-        startDate: getDateStr(22),
-        endDate: getDateStr(22),
-        title: "영어 스터디",
-        category: "개인",
-        type: "개인",
-        isTodo: false,
-        displayInCalendar: true,
-      },
-      {
-        id: 204,
-        date: getDateStr(29),
-        startDate: getDateStr(29),
-        endDate: getDateStr(29),
-        title: "영어 스터디",
-        category: "개인",
-        type: "개인",
-        isTodo: false,
-        displayInCalendar: true,
-      },
-      {
-        id: 205,
-        date: getDateStr(16),
-        startDate: getDateStr(16),
-        endDate: getDateStr(16),
-        title: "건강검진 예약",
-        category: "개인",
-        type: "개인",
-        isTodo: false,
-        displayInCalendar: true,
-      },
-
-      // 할일에서 캘린더에 추가된 일정 (TODO 카테고리)
-      {
-        id: 301,
-        date: getDateStr(10),
-        startDate: getDateStr(10),
-        endDate: getDateStr(10),
-        title: "이메일 정리하기",
-        category: "TODO",
-        type: "TODO",
-        isTodo: true,
-        originalTodoId: 103,
-        displayInCalendar: true,
-      },
-      {
-        id: 302,
-        date: getDateStr(18),
-        startDate: getDateStr(18),
-        endDate: getDateStr(18),
-        title: "월간 개인 목표 점검",
-        category: "TODO",
-        type: "TODO",
-        isTodo: true,
-        originalTodoId: 105,
-        displayInCalendar: true,
-      },
-    ];
-
-    // 데이터 로딩 시뮬레이션
-    setTimeout(() => {
-      setSchedules(dummySchedules);
-      localStorage.setItem("schedules", JSON.stringify(dummySchedules));
+  // 일정/할일 데이터 모두 불러오기
+  const fetchAllData = async () => {
+    if (!userInfo?.id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [schedulesRes, todosRes, categoriesRes] = await Promise.all([
+        scheduleApi.getSchedulesByUser(userInfo.id),
+        todoApi.getTodosByUser(userInfo.id),
+        categoryApi.getCategories(userInfo.id)
+      ]);
+      setSchedules([...schedulesRes.data, ...todosRes.data]);
+      setCategories(["전체", ...categoriesRes.data]);
       setLoading(false);
-    }, 500);
+    } catch (err) {
+      setError("데이터를 불러오지 못했습니다.");
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    const accessToken = Cookies.get("accessToken");
+    if (userInfo === undefined || userInfo === null) {
+      setLoading(true);
+      return;
+    }
+    if (!userInfo.id || !accessToken) {
+      setError("로그인 정보 또는 토큰이 올바르지 않습니다.");
+      setLoading(false);
+      return;
+    }
+    fetchAllData();
+  }, [userInfo]);
+
+  // 컴포넌트 마운트 시 한 번만 실행되는 useEffect 추가
+  useEffect(() => {
+    loginCheck();
+  }, []); // 빈 의존성 배열
 
   // 날짜 또는 필터가 변경될 때 일정 필터링
   useEffect(() => {
@@ -392,29 +159,58 @@ const MyPage = () => {
   };
 
   // 새 일정 저장 핸들러
-  const handleSaveNewEvent = () => {
+  const handleSaveNewEvent = async () => {
     if (!newEvent.title.trim()) return;
+    
+    const accessToken = Cookies.get("accessToken");
+    console.log("현재 토큰:", accessToken);
+    console.log("현재 userInfo:", userInfo);
+    console.log("newEvent 상태:", newEvent);  // 디버깅용
+    
+    if (!accessToken) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
 
-    // 저장 알림
-    alert("일정이 저장되었습니다: " + newEvent.title);
-
-    // 새 일정 생성
-    const newSchedule = {
-      id: Date.now(),
-      ...newEvent,
-      date: newEvent.startDate, // date 필드는 startDate 값으로 설정
-    };
-
-    // 일정 목록에 추가
-    setSchedules((prev) => {
-      const updated = [...prev, newSchedule];
-      // localStorage에 저장
-      localStorage.setItem("schedules", JSON.stringify(updated));
-      return updated;
-    });
-
-    // 모달 닫기
-    setAddEventModalOpen(false);
+    try {
+      // 백엔드 요구사항에 맞는 형식으로 데이터 구성
+      const scheduleData = {
+        title: newEvent.title,
+        startDate: newEvent.startDate,
+        endDate: newEvent.endDate,
+        category: newEvent.type,  // type을 category로 사용
+        startTime: (newEvent.startTime || "09:00") + ":00",  // 기본값 설정
+        endTime: (newEvent.endTime || "10:00") + ":00"       // 기본값 설정
+      };
+      
+      console.log("보내는 데이터:", scheduleData);
+      
+      // 백엔드 API 호출
+      const response = await scheduleApi.createSchedule(scheduleData);
+      
+      console.log("API 응답:", response);
+      
+      alert("일정이 추가되었습니다: " + newEvent.title);
+      setAddEventModalOpen(false);
+      fetchAllData();
+    } catch (e) {
+      console.log("에러 상세:", {
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        data: e.response?.data,
+        headers: e.response?.headers,
+        config: e.config
+      });
+      
+      if (e.response?.status === 403) {
+        alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+        navigate("/login");
+      } else {
+        alert("일정 추가에 실패했습니다.");
+        console.error(e);
+      }
+    }
   };
 
   // 모달 닫기 핸들러
@@ -424,32 +220,14 @@ const MyPage = () => {
 
   // 개인 일정 삭제 핸들러
   const handleDeletePersonalTodo = (id) => {
-    // 삭제 전 확인
-    if (!window.confirm("일정을 삭제하시겠습니까?")) {
-      return; // 취소하면 함수 종료
+    if (!window.confirm("할일을 삭제하시겠습니까?")) {
+      return;
     }
-
     setSchedules((prev) => {
-      // 캘린더에 추가된 관련 TODO 항목 찾기 (originalTodoId가 현재 삭제하려는 id와 일치하는 항목)
-      const hasRelatedCalendarItem = prev.some(
-        (item) => item.originalTodoId === id && item.type === "TODO"
-      );
-
-      // 관련 캘린더 항목이 있으면 알림
-      if (hasRelatedCalendarItem) {
-        alert("내 할일과 관련된 캘린더 항목도 함께 삭제됩니다.");
-      } else {
-        alert("일정이 삭제되었습니다(ID: " + id + ")");
-      }
-
-      // 삭제할 할일과 관련된 캘린더 항목도 함께 삭제
+      // id와 type이 모두 일치하는 TODO만 삭제
       const updated = prev.filter(
-        (schedule) =>
-          schedule.id !== id &&
-          !(schedule.originalTodoId === id && schedule.type === "TODO")
+        (schedule) => !(schedule.id === id && (schedule.type === "TODO" || schedule.category === "TODO"))
       );
-
-      // localStorage에 저장
       localStorage.setItem("schedules", JSON.stringify(updated));
       return updated;
     });
@@ -599,6 +377,33 @@ const MyPage = () => {
     setAddEventModalOpen(true);
   };
 
+  // 카테고리 추가 핸들러
+  const handleAddCategory = async (newCategory) => {
+    if (!userInfo?.id) return;
+    try {
+      await categoryApi.addCategory(userInfo.id, newCategory);
+      fetchAllData();
+    } catch (err) {
+      alert("카테고리 추가에 실패했습니다.");
+    }
+  };
+
+  // 카테고리 삭제 핸들러
+  const handleDeleteCategory = async (category) => {
+    if (!userInfo?.id) return;
+    try {
+      await categoryApi.deleteCategory(userInfo.id, category);
+      fetchAllData();
+    } catch (err) {
+      alert("카테고리 삭제에 실패했습니다.");
+    }
+  };
+
+  // 카테고리 모달 닫기 핸들러
+  const handleCloseCategoryModal = () => {
+    setCategoryModalOpen(false);
+  };
+
   if (loading) {
     return <LoadingView />;
   }
@@ -641,6 +446,8 @@ const MyPage = () => {
             onDateClick={onDateClick}
             onAddToCalendar={handleAddTodoToCalendar}
             onRemoveFromCalendar={handleRemoveTodoFromCalendar}
+            onDataChanged={fetchAllData}
+            userInfo={userInfo}
           />
         </Box>
       </Box>
@@ -678,6 +485,17 @@ const MyPage = () => {
         onChange={handleEditEventChange}
         onSave={handleSaveEditEvent}
         categories={categories}
+      />
+
+      <CategoryModal
+        isOpen={categoryModalOpen}
+        onClose={handleCloseCategoryModal}
+        categories={categories}
+        newCategory={newCategory}
+        onCategoryChange={setNewCategory}
+        onAddCategory={handleAddCategory}
+        onDeleteCategory={handleDeleteCategory}
+        onCategoryFilterChange={setCategoryFilter}
       />
     </Container>
   );
