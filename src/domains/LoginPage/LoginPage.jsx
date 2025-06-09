@@ -4,6 +4,7 @@ import LoginForm from './components/LoginForm';
 import './css/LoginPage.css';
 
 const LoginPage = () => {
+  
   return (
     <Box className="login-container">
       <Box className="login-box">

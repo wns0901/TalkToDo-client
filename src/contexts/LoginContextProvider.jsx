@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
-import api from "../apis/api";
+import api from "../apis/baseApi";
 import * as auth from "../apis/auth";
 
 import * as Swal from "../apis/alert";
@@ -68,34 +68,13 @@ const LoginContextProvider = ({ children }) => {
     loginCheck();
   }, []);
 
-  const login = async (username, password, rememberId) => {
-    console.log(`
-      로그인 요청
-      login(username:${username}, password:${password}, rememberId: ${rememberId});
-    `);
-
-    if (rememberId) Cookies.set("rememberId", username);
-    else Cookies.remove("rememberId");
-
+  const login = async (username, password) => {
     try {
       const response = await auth.login(username, password);
-      const { data, status, headers } = response;
-      
-      // 응답 헤더에서 토큰 확인
-      const authorization = headers?.authorization;
-      if (!authorization) {
-        throw new Error("인증 토큰이 없습니다.");
-      }
+      const { status, headers } = response;
+      const { authorization } = headers;
 
       const accessToken = authorization.replace("Bearer ", "");
-
-      console.log(`
-        -- login 요청응답 --
-        data : ${JSON.stringify(data)}
-        status : ${status}
-        headers : ${JSON.stringify(headers)}
-        jwt : ${accessToken}
-      `);
 
       // 토큰 저장
       Cookies.set("accessToken", accessToken);
@@ -103,9 +82,8 @@ const LoginContextProvider = ({ children }) => {
       // 사용자 정보 설정
       loginSetting(data, accessToken);
 
-      Swal.alert("로그인 성공", "메인화면으로 이동합니다.", "success", () => {
         navigate("/");
-      });
+      }
     } catch (error) {
       console.error(`로그인 error:`, error);
       Swal.alert("로그인 실패", "아이디와 비밀번호를 확인해주세요.", "error");
@@ -133,29 +111,22 @@ const LoginContextProvider = ({ children }) => {
   };
 
   const loginSetting = (userData, accessToken) => {
-    const { id, username, role } = userData;
+    const { id, username } = userData;
 
     console.log(`
       loginSetting()
       id : ${id}
       username : ${username}
-      role : ${role}
     `);
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
     setIsLogin(true);
 
-    const updateUserInfo = { id, username, role };
+    const updateUserInfo = { id, username };
     setUserInfo(updateUserInfo);
 
     const updatedRoles = { isMember: false, isAdmin: false };
-
-    role.split(",").forEach((role) => {
-      if (role === "ROLE_MEMBER") updatedRoles.isMember = true;
-      if (role === "ROLE_ADMIN") updatedRoles.isAdmin = true;
-    });
-    setRoles(updatedRoles);
 
     localStorage.setItem(
       "data",
@@ -170,7 +141,6 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
-    setRoles(null);
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
