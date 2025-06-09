@@ -34,10 +34,6 @@ const LoginContextProvider = ({ children }) => {
     if (!accessToken) {
       console.log(`쿠키에 JWT(accessToken) 이 없음`);
       logoutSetting();
-      return;
-    }
-
-    if (!accessToken && isAuthPage) {
       navigate("/login");
       return;
     }
