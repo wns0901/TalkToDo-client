@@ -102,7 +102,7 @@ const LoginContextProvider = ({ children }) => {
       (result) => {
         if (result.isConfirmed) {
           logoutSetting();
-          navigate("/");
+          navigate("/login");
         }
       }
     );
@@ -118,7 +118,7 @@ const LoginContextProvider = ({ children }) => {
     `);
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-
+    
     setIsLogin(true);
 
     const updateUserInfo = { id, username };

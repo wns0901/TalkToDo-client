@@ -10,6 +10,7 @@ import {
   Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import { test } from "../apis/api";
 
 // 초를 mm:ss 형태로 변환하는 함수
 function formatTime(seconds) {
@@ -34,7 +35,8 @@ const TotalMeetingComponent = () => {
 
   useEffect(() => {
     (async () => {
-      const fetchData = await fakeApi.getTranscript();
+      // const fetchData = await fakeApi.getTranscript();
+      const fetchData = await test.getTranscript();
       setTranscript(fetchData);
       const audioPath = await fakeApi.getAudioFile();
       setAudioFile(audioPath);
@@ -129,7 +131,7 @@ const TotalMeetingComponent = () => {
               sx={{ color: "primary.main", cursor: "pointer", minWidth: 60 }}
               onClick={() => handleTimeClick(item.start)}
             >
-              {formatTime(item.start)}
+              {formatTime(item.startTime)}
             </Typography>
             <Typography
               variant="body2"
