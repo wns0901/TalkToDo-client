@@ -35,6 +35,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { myPageStyles } from "../css/MyPage.styles";
 import { format } from "date-fns";
+import * as todoApi from "../../../apis/todo";
 
 /**
  * 개인 할일 목록을 표시하는 컴포넌트
@@ -46,6 +47,8 @@ const TodoList = ({
   onDateClick,
   onAddToCalendar,
   onRemoveFromCalendar,
+  onDataChanged,
+  userInfo,
 }) => {
   const [completedTodos, setCompletedTodos] = useState([]);
   const [activeTodoModalOpen, setActiveTodoModalOpen] = useState(false);
@@ -57,10 +60,10 @@ const TodoList = ({
     title: "",
     startDate: format(new Date(), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
-    category: "개인",
-    type: "개인",
-    isTodo: true,
-    displayInCalendar: false,
+    type: "TODO",
+    isTodo: false,
+    addedToMyTodo: false,
+    status: "PENDING",
   });
 
   // 더보기 메뉴 상태
@@ -80,14 +83,13 @@ const TodoList = ({
    * 할일 완료 상태 토글 핸들러
    * @param {Object} todo - 할일 객체
    */
-  const handleToggleComplete = (todo, e) => {
+  const handleToggleComplete = async (todo, e) => {
     e.stopPropagation();
-    if (completedTodos.find((item) => item.id === todo.id)) {
-      // 완료 목록에서 제거
-      setCompletedTodos((prev) => prev.filter((item) => item.id !== todo.id));
-    } else {
-      // 완료 목록에 추가
-      setCompletedTodos((prev) => [...prev, todo]);
+    try {
+      await todoApi.updateTodo(todo.id, { isTodo: true });
+      if (onDataChanged) onDataChanged();
+    } catch (e) {
+      alert("완료 상태 변경에 실패했습니다.");
     }
   };
 
@@ -95,19 +97,27 @@ const TodoList = ({
    * 완료된 할일 복구 핸들러
    * @param {Object} todo - 할일 객체
    */
-  const handleRestoreTodo = (todo, e) => {
+  const handleRestoreTodo = async (todo, e) => {
     e.stopPropagation();
-    setCompletedTodos((prev) => prev.filter((item) => item.id !== todo.id));
+    try {
+      await todoApi.updateTodo(todo.id, { isTodo: false });
+      if (onDataChanged) onDataChanged();
+    } catch (e) {
+      alert("할일 복구에 실패했습니다.");
+    }
   };
 
   /**
    * 일정에 추가 핸들러
    * @param {Object} todo - 할일 객체
    */
-  const handleAddToCalendar = (todo, e) => {
+  const handleAddToCalendar = async (todo, e) => {
     e.stopPropagation();
-    if (onAddToCalendar) {
-      onAddToCalendar(todo);
+    try {
+      await todoApi.updateTodo(todo.id, { addedToMyTodo: true });
+      if (onAddToCalendar) onAddToCalendar();
+    } catch (e) {
+      alert("일정에 추가 실패");
     }
   };
 
@@ -115,10 +125,13 @@ const TodoList = ({
    * 일정에서 제거 핸들러
    * @param {Object} todo - 할일 객체
    */
-  const handleRemoveFromCalendar = (todo, e) => {
+  const handleRemoveFromCalendar = async (todo, e) => {
     e.stopPropagation();
-    if (onRemoveFromCalendar) {
-      onRemoveFromCalendar(todo.id);
+    try {
+      await todoApi.updateTodo(todo.id, { addedToMyTodo: false });
+      if (onRemoveFromCalendar) onRemoveFromCalendar();
+    } catch (e) {
+      alert("일정에서 제거 실패");
     }
   };
 
@@ -166,10 +179,10 @@ const TodoList = ({
       title: "",
       startDate: format(new Date(), "yyyy-MM-dd"),
       endDate: format(new Date(), "yyyy-MM-dd"),
-      category: "개인",
-      type: "개인",
-      isTodo: true,
-      displayInCalendar: false,
+      type: "TODO",
+      isTodo: false,
+      addedToMyTodo: false,
+      status: "PENDING",
     });
   };
 
@@ -185,41 +198,63 @@ const TodoList = ({
   };
 
   /**
-   * 새 할일 저장 핸들러
+   * 새 할일 저장 핸들러 (API 연동)
    */
-  const handleSaveTodo = () => {
-    if (!newTodo.title.trim()) {
-      alert("할일 제목을 입력해주세요.");
-      return;
+  const handleSaveTodo = async () => {
+    if (!newTodo.title.trim()) return;
+
+    try {
+      const todoData = {
+        title: newTodo.title,
+        startDate: newTodo.startDate,
+        dueDate: newTodo.endDate,
+        type: "TODO",
+        isTodo: false,
+        addedToMyTodo: false,
+        status: "PENDING",
+        assignee: { id: userInfo.id },
+      };
+      console.log('할일 추가 요청 데이터:', todoData);
+      await todoApi.createTodo(todoData);
+
+      alert("할일이 추가되었습니다: " + newTodo.title);
+      handleCloseAddTodoModal();
+      if (onDataChanged) onDataChanged();
+    } catch (e) {
+      console.error("할일 추가 실패:", e);
+      alert("할일 추가에 실패했습니다.");
     }
-
-    // 새 할일 객체 생성
-    const todoToAdd = {
-      ...newTodo,
-      id: Date.now(),
-      date: newTodo.startDate,
-    };
-
-    // 기존 일정에 추가
-    const updatedSchedules = [...schedules, todoToAdd];
-
-    // 로컬 스토리지에 저장
-    localStorage.setItem("schedules", JSON.stringify(updatedSchedules));
-
-    // 모달 닫기
-    handleCloseAddTodoModal();
-
-    // 페이지 리로드하여 새 할일 표시
-    window.location.reload();
   };
 
-  // 개인 카테고리 일정만 필터링하고 날짜순으로 정렬
+  /**
+   * 할일 삭제 핸들러 (API 연동)
+   * @param {Object} todo - 할일 객체
+   */
+  const handleDeleteTodo = async (todo) => {
+    try {
+      await todoApi.deleteTodo(todo.id);
+      if (onDataChanged) onDataChanged();
+    } catch (e) {
+      alert("할일 삭제에 실패했습니다.");
+    }
+  };
+
+  /**
+   * 할일 수정 핸들러 (API 연동)
+   * @param {Object} todo - 할일 객체
+   */
+  const handleEditTodo = async (todo) => {
+    try {
+      await todoApi.updateTodo(todo.id, todo);
+      if (onDataChanged) onDataChanged();
+    } catch (e) {
+      alert("할일 수정에 실패했습니다.");
+    }
+  };
+
+  // TODO만 필터링해서 날짜순으로 정렬
   const personalTodos = schedules
-    .filter(
-      (event) =>
-        event.type === "개인" &&
-        (event.isTodo === true || event.isTodo === undefined)
-    )
+    .filter((event) => event.type === "TODO")
     .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
   // 완료되지 않은 할일 목록
@@ -337,7 +372,7 @@ const TodoList = ({
                 <MenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditEvent(todo);
+                    handleEditTodo(todo);
                     handleMenuClose();
                   }}
                 >
@@ -346,7 +381,7 @@ const TodoList = ({
                 <MenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeleteEvent(todo.id);
+                    handleDeleteTodo(todo);
                     handleMenuClose();
                   }}
                 >
@@ -369,7 +404,7 @@ const TodoList = ({
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                onDeleteEvent(todo.id);
+                handleDeleteTodo(todo);
               }}
               sx={{ color: "#666" }}
               aria-label="할일 삭제"
@@ -639,7 +674,7 @@ const TodoList = ({
                           startIcon={<EditIcon />}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onEditEvent(todo);
+                            handleEditTodo(todo);
                             handleCloseActiveTodoModal();
                           }}
                         >

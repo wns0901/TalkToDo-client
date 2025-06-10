@@ -219,10 +219,32 @@ export const AddEventModal = ({
           <TextField
             fullWidth
             margin="dense"
+            label="시작 시간"
+            type="time"
+            name="startTime"
+            value={newEvent.startTime || "09:00"}
+            onChange={onChange}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            margin="dense"
             label="종료 날짜"
             type="date"
             name="endDate"
             value={newEvent.endDate}
+            onChange={onChange}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            margin="dense"
+            label="종료 시간"
+            type="time"
+            name="endTime"
+            value={newEvent.endTime || "10:00"}
             onChange={onChange}
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
