@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Box,
   Container,
@@ -13,16 +13,18 @@ import {
 } from "@mui/material";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import { Link, useLocation } from "react-router-dom";
-import { getMeetings } from "../apis/fakeApi";
+import api from "../apis/baseApi";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import { LoginContext } from "../contexts/LoginContextProvider";
 
 const SideBar = () => {
   const [meetings, setMeetings] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const { userInfo, isTokenSet } = useContext(LoginContext);
   const location = useLocation();
 
   // 현재 URL에서 meetingId 추출
@@ -33,11 +35,22 @@ const SideBar = () => {
 
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetings();
-      setMeetings(response);
+      if (!isTokenSet) {
+        console.log("토큰이 아직 설정되지 않았습니다. 잠시만 기다려주세요...");
+        return;
+      }
+
+      try {
+        const userId = userInfo.id;
+        const response = await api.get("/api/meetings/user/" + userId);
+        setMeetings(response.data);
+      } catch (error) {
+        console.error("미팅 목록을 가져오는데 실패했습니다:", error);
+      }
     };
+
     fetchMeetings();
-  }, []);
+  }, [userInfo.id, isTokenSet]);
 
   const handleMoreClick = (event, meetingId) => {
     setAnchorEl(event.currentTarget);
@@ -113,7 +126,6 @@ const SideBar = () => {
                   <MoreVertIcon />
                 </IconButton>
               }
-              button
               component={Link}
               to={`/meetings/${meeting.id}`}
               sx={{

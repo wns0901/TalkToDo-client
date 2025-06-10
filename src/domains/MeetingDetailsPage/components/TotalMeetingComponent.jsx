@@ -10,7 +10,8 @@ import {
   Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { test } from "../apis/api";
+import api from "../../../apis/baseApi.js";
+import { useLocation } from "react-router-dom";
 
 // 초를 mm:ss 형태로 변환하는 함수
 function formatTime(seconds) {
@@ -23,6 +24,9 @@ function formatTime(seconds) {
 }
 
 const TotalMeetingComponent = () => {
+  const location = useLocation();
+  const meetingId = location.pathname.split("/").pop();
+
   const [transcript, setTranscript] = useState([]);
   const [audioFile, setAudioFile] = useState("");
   const [isEdited, setIsEdited] = useState(false);
@@ -35,11 +39,14 @@ const TotalMeetingComponent = () => {
 
   useEffect(() => {
     (async () => {
-      // const fetchData = await fakeApi.getTranscript();
-      const fetchData = await test.getTranscript();
-      setTranscript(fetchData);
-      const audioPath = await fakeApi.getAudioFile();
-      setAudioFile(audioPath);
+      try {
+        const fetchData = await api.get(`/api/transcript-lines/${meetingId}`);
+        const audioData = await api.get(`/api/meetings/${meetingId}/audio`);
+        setTranscript(fetchData.data);
+        setAudioFile(audioData.data);
+      } catch (error) {
+        console.error("트랜스크립트를 가져오는데 실패했습니다:", error);
+      }
     })();
   }, []);
 
@@ -47,6 +54,8 @@ const TotalMeetingComponent = () => {
   const handleTimeClick = (seconds) => {
     if (audioRef.current) {
       if (audioRef.current.readyState > 0) {
+        console.log(seconds);
+        
         audioRef.current.currentTime = seconds;
         audioRef.current.play();
       } else {
@@ -72,7 +81,7 @@ const TotalMeetingComponent = () => {
 
   // 수정 버튼 클릭 시 동작
   const handleEditClick = async () => {
-    const result = await fakeApi.updateTranscript(transcript);
+    const result = await api.put("/api/transcript-lines", {transcriptLineList: transcript});
     if (result) {
       setIsEdited(false);
       setSnackbar({
@@ -96,7 +105,14 @@ const TotalMeetingComponent = () => {
             ref={audioRef}
             src={audioFile}
             controls
-            style={{ width: "50%", margin: "16px auto", display: "block" }}
+            preload="metadata"
+            style={{
+              width: "80%",
+              margin: "16px auto",
+              display: "block",
+              borderRadius: "8px",
+              backgroundColor: "#f5f5f5",
+            }}
           />
         )}
       </Box>
@@ -129,7 +145,7 @@ const TotalMeetingComponent = () => {
             <Typography
               variant="body2"
               sx={{ color: "primary.main", cursor: "pointer", minWidth: 60 }}
-              onClick={() => handleTimeClick(item.start)}
+              onClick={() => handleTimeClick(item.startTime)}
             >
               {formatTime(item.startTime)}
             </Typography>

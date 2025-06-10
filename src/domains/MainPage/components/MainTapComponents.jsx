@@ -4,10 +4,11 @@ import FileInputWithMic from "./FileInputWithMic";
 import { useNavigate } from "react-router-dom";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import api from "../apis/baseApi";
+import api from "../../../apis/baseApi";
 
 const MainTapComponents = () => {
   const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("");
   const [meetingDate, setMeetingDate] = useState(null);
   const navigate = useNavigate();
 
@@ -15,6 +16,7 @@ const MainTapComponents = () => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setFile(file);
+      setFileName(file.name)
     }
   };
 
@@ -45,12 +47,17 @@ const MainTapComponents = () => {
     }
 
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("meetingDate", meetingDate);
+    formData.append("audioFile", file);
+    formData.append("date", meetingDate);
 
-    const response = await api.post("/meetings", formData);
+    const response = await api.post("/api/meetings", formData);
 
-    navigate("/meetings/1");
+    if (response.status === 200) {
+      const meetingId = response.data.id;
+      navigate("/meetings/" + meetingId);
+    } else {
+      alert("회의 등록에 실패했습니다.");
+    }
   };
 
   return (

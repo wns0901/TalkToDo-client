@@ -12,15 +12,14 @@ LoginContext.displayName = "LoginContextName";
 
 const LoginContextProvider = ({ children }) => {
   const navigate = useNavigate();
+  const [isTokenSet, setIsTokenSet] = useState(false);
 
   const { isLoginData, userInfoData, rolesData } = JSON.parse(
     localStorage.getItem("data")
   ) || { isLoginData: null, userInfoData: null, rolesData: null };
 
   const [isLogin, setIsLogin] = useState(isLoginData || false);
-
   const [userInfo, setUserInfo] = useState(userInfoData || {});
-
   const [roles, setRoles] = useState(
     rolesData || { isMember: false, isAdmin: false }
   );
@@ -40,6 +39,7 @@ const LoginContextProvider = ({ children }) => {
 
     console.log("쿠키에 JWT(accessToken) 이 저장되어 있음");
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+    setIsTokenSet(true);
 
     try {
       response = await auth.userInfo();
@@ -78,9 +78,7 @@ const LoginContextProvider = ({ children }) => {
 
       if (status === 200) {
         Cookies.set("accessToken", accessToken);
-
         loginCheck();
-
         navigate("/");
       }
     } catch (error) {
@@ -118,7 +116,8 @@ const LoginContextProvider = ({ children }) => {
     `);
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-    
+    setIsTokenSet(true);
+
     setIsLogin(true);
 
     const updateUserInfo = { id, username };
@@ -139,6 +138,7 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
+    setIsTokenSet(false);
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
@@ -148,7 +148,15 @@ const LoginContextProvider = ({ children }) => {
 
   return (
     <LoginContext.Provider
-      value={{ isLogin, userInfo, roles, loginCheck, login, logout }}
+      value={{
+        isLogin,
+        userInfo,
+        roles,
+        loginCheck,
+        login,
+        logout,
+        isTokenSet,
+      }}
     >
       {children}
     </LoginContext.Provider>
