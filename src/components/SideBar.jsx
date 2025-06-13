@@ -12,13 +12,14 @@ import {
   MenuItem,
 } from "@mui/material";
 import EventNoteIcon from "@mui/icons-material/EventNote";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../apis/baseApi";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import { LoginContext } from "../contexts/LoginContextProvider";
+import { useLogin } from "../contexts/LoginContextProvider";
 
 const SideBar = () => {
   const [meetings, setMeetings] = useState([]);
@@ -26,6 +27,8 @@ const SideBar = () => {
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
   const { userInfo, isTokenSet } = useContext(LoginContext);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { sidebarKey } = useLogin();
 
   // 현재 URL에서 meetingId 추출
   const currentMeetingId = (() => {
@@ -50,7 +53,7 @@ const SideBar = () => {
     };
 
     fetchMeetings();
-  }, [userInfo.id, isTokenSet]);
+  }, [userInfo.id, isTokenSet, sidebarKey]);
 
   const handleMoreClick = (event, meetingId) => {
     setAnchorEl(event.currentTarget);

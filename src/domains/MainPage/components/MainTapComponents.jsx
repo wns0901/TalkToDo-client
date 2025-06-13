@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, CircularProgress } from "@mui/material";
 import FileInputWithMic from "./FileInputWithMic";
 import { useNavigate } from "react-router-dom";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import api from "../../../apis/baseApi";
+import { useLogin } from "../../../contexts/LoginContextProvider";
 
 const MainTapComponents = () => {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [meetingDate, setMeetingDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { refreshSidebar } = useLogin();
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setFile(file);
-      setFileName(file.name)
+      setFileName(file.name);
     }
   };
 
@@ -46,17 +49,30 @@ const MainTapComponents = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("audioFile", file);
-    formData.append("date", meetingDate);
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("audioFile", file);
+      formData.append("date", meetingDate);
 
-    const response = await api.post("/api/meetings", formData);
+      const response = await api.post("/api/meetings", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    if (response.status === 200) {
-      const meetingId = response.data.id;
-      navigate("/meetings/" + meetingId);
-    } else {
+      if (response.status === 200) {
+        const meetingId = response.data.id;
+        refreshSidebar();
+        navigate("/meetings/" + meetingId);
+      } else {
+        alert("회의 등록에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("회의 등록 중 오류 발생:", error);
       alert("회의 등록에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -106,11 +122,29 @@ const MainTapComponents = () => {
                 color: "#fff",
                 boxShadow: "none",
               },
+              position: "relative",
             }}
             onClick={handleConvert}
-            disabled={!meetingDate}
+            disabled={!meetingDate || isLoading}
           >
-            변환
+            {isLoading ? (
+              <>
+                <CircularProgress
+                  size={24}
+                  sx={{
+                    color: "#fff",
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    marginTop: "-12px",
+                    marginLeft: "-12px",
+                  }}
+                />
+                <span style={{ visibility: "hidden" }}>변환</span>
+              </>
+            ) : (
+              "변환"
+            )}
           </Button>
         </>
       )}

@@ -48,14 +48,14 @@ const TotalMeetingComponent = () => {
         console.error("트랜스크립트를 가져오는데 실패했습니다:", error);
       }
     })();
-  }, []);
+  }, [meetingId]);
 
   // 초 클릭 시 오디오 재생바 위치 이동
   const handleTimeClick = (seconds) => {
     if (audioRef.current) {
       if (audioRef.current.readyState > 0) {
         console.log(seconds);
-        
+
         audioRef.current.currentTime = seconds;
         audioRef.current.play();
       } else {
@@ -81,7 +81,9 @@ const TotalMeetingComponent = () => {
 
   // 수정 버튼 클릭 시 동작
   const handleEditClick = async () => {
-    const result = await api.put("/api/transcript-lines", {transcriptLineList: transcript});
+    const result = await api.put("/api/transcript-lines", {
+      transcriptLineList: transcript,
+    });
     if (result) {
       setIsEdited(false);
       setSnackbar({
