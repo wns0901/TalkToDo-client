@@ -55,8 +55,8 @@ const MyPage = () => {
     date: format(today, "yyyy-MM-dd"),
     startDate: format(today, "yyyy-MM-dd"),
     endDate: format(today, "yyyy-MM-dd"),
-    category: "개인",
-    type: "개인",
+    category: "PERSONAL",
+    type: "PERSONAL",
     startTime: "09:00",  // 기본 시작 시간
     endTime: "10:00"     // 기본 종료 시간
   });
@@ -75,6 +75,22 @@ const MyPage = () => {
   const { userInfo, loginCheck } = useLogin();
   const navigate = useNavigate();
 
+  // 한글-영어 카테고리 매핑
+  const CATEGORY_KO_TO_EN = {
+    "회사": "COMPANY",
+    "팀": "TEAM",
+    "개인": "PERSONAL",
+    "할일": "TODO",
+    "전체": "전체"
+  };
+  const CATEGORY_EN_TO_KO = {
+    "COMPANY": "회사",
+    "TEAM": "팀",
+    "PERSONAL": "개인",
+    "TODO": "할일",
+    "전체": "전체"
+  };
+
   // 일정/할일 데이터 모두 불러오기
   const fetchAllData = async () => {
     if (!userInfo?.id) return;
@@ -86,7 +102,11 @@ const MyPage = () => {
         todoApi.getTodosByUser(userInfo.id),
         categoryApi.getCategories(userInfo.id)
       ]);
-      setSchedules([...schedulesRes.data, ...todosRes.data]);
+      const merged = [...schedulesRes.data, ...todosRes.data];
+      const uniqueSchedules = merged.filter(
+        (item, idx, arr) => arr.findIndex(e => e.id === item.id) === idx
+      );
+      setSchedules(uniqueSchedules);
       setCategories(["전체", ...categoriesRes.data]);
       setLoading(false);
     } catch (err) {
@@ -163,9 +183,6 @@ const MyPage = () => {
     if (!newEvent.title.trim()) return;
     
     const accessToken = Cookies.get("accessToken");
-    console.log("현재 토큰:", accessToken);
-    console.log("현재 userInfo:", userInfo);
-    console.log("newEvent 상태:", newEvent);  // 디버깅용
     
     if (!accessToken) {
       alert("로그인이 필요합니다.");
@@ -180,35 +197,25 @@ const MyPage = () => {
         startDate: newEvent.startDate,
         endDate: newEvent.endDate,
         category: newEvent.type,  // type을 category로 사용
+        type: newEvent.type,      // Chip 표시를 위해 type 필드도 추가
         startTime: (newEvent.startTime || "09:00") + ":00",  // 기본값 설정
-        endTime: (newEvent.endTime || "10:00") + ":00"       // 기본값 설정
+        endTime: (newEvent.endTime || "10:00") + ":00",      // 기본값 설정
+        location: newEvent.location,
+        displayInCalendar: true // 캘린더에 바로 표시
       };
-      
-      console.log("보내는 데이터:", scheduleData);
-      
+      console.log('[일정 추가] 서버로 보내는 데이터:', scheduleData);
       // 백엔드 API 호출
       const response = await scheduleApi.createSchedule(scheduleData);
-      
-      console.log("API 응답:", response);
       
       alert("일정이 추가되었습니다: " + newEvent.title);
       setAddEventModalOpen(false);
       fetchAllData();
     } catch (e) {
-      console.log("에러 상세:", {
-        status: e.response?.status,
-        statusText: e.response?.statusText,
-        data: e.response?.data,
-        headers: e.response?.headers,
-        config: e.config
-      });
-      
       if (e.response?.status === 403) {
         alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
         navigate("/login");
       } else {
         alert("일정 추가에 실패했습니다.");
-        console.error(e);
       }
     }
   };
@@ -308,40 +315,45 @@ const MyPage = () => {
   const handleEditEventChange = (e) => {
     const { name, value } = e.target;
     setEditEvent((prev) => {
+      let newValue = value;
+      if (name === "category" || name === "type") {
+        // 한글로 들어오면 영어로 변환
+        newValue = CATEGORY_KO_TO_EN[value] || value;
+      }
       const updated = {
         ...prev,
-        [name]: value,
+        [name]: newValue,
       };
-
-      // 타입이 변경되면 카테고리도 동일한 값으로 설정
+      // 타입이 변경되면 카테고리도 동일하게 맞춤
       if (name === "type") {
-        updated.category = value;
+        updated.category = newValue;
       }
-
       return updated;
     });
   };
 
   // 일정 수정 저장 핸들러
-  const handleSaveEditEvent = () => {
+  const handleSaveEditEvent = async () => {
     if (!editEvent || !editEvent.title.trim()) return;
-
-    alert("일정이 수정되었습니다: " + editEvent.title);
-
-    // 수정된 일정으로 업데이트
-    setSchedules((prev) => {
-      const updated = prev.map((item) =>
-        item.id === editEvent.id
-          ? { ...editEvent, date: editEvent.startDate }
-          : item
-      );
-      // localStorage에 저장
-      localStorage.setItem("schedules", JSON.stringify(updated));
-      return updated;
-    });
-
-    // 모달 닫기
-    setEditEventModalOpen(false);
+    try {
+      const updateData = {
+        title: editEvent.title,
+        startDate: editEvent.startDate,
+        endDate: editEvent.endDate,
+        category: editEvent.category,
+        type: editEvent.type,
+        startTime: editEvent.startTime,
+        endTime: editEvent.endTime,
+        location: editEvent.location,
+        displayInCalendar: true,
+      };
+      console.log('[일정 수정] 서버로 보내는 데이터:', updateData);
+      await scheduleApi.updateSchedule(editEvent.id, updateData);
+      setEditEventModalOpen(false);
+      fetchAllData();
+    } catch (e) {
+      alert('일정 수정에 실패했습니다.');
+    }
   };
 
   // 셀 클릭 핸들러
