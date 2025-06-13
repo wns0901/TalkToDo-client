@@ -15,7 +15,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import { format } from 'date-fns';
 import { myPageStyles } from '../css/MyPage.styles';
-import { getCategoryColor, formatDateRange } from '../js/utils';
+import { getCategoryColor } from '../js/utils';
 
 const DailyEvents = ({ 
   selectedDate, 
@@ -73,32 +73,39 @@ const DailyEvents = ({
               }}
               onClick={() => handleDateClick(event)}
             >
-              <ListItemText 
-                primary={event.title}
-                secondary={formatDateRange(event.startDate, event.endDate)}
-                sx={{
-                  ...myPageStyles.eventText,
-                  '& .MuiTypography-root': {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }
-                }}
+              <ListItemText
+                primary={
+                  <Typography variant="body1" sx={myPageStyles.eventText}>
+                    {event.title}
+                  </Typography>
+                }
+                secondary={
+                  <Box sx={{ mt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {event.startTime} - {event.endTime}
+                    </Typography>
+                    {event.location && (
+                      <Typography variant="body2" color="text.secondary">
+                        장소: {event.location}
+                      </Typography>
+                    )}
+                  </Box>
+                }
               />
               <Box sx={{ display: 'flex', gap: 1 }}>
-                <Chip 
-                  label={event.category} 
-                  size="small" 
+                <Chip
+                  label={event.type}
+                  size="small"
                   sx={{
                     borderRadius: '4px',
-                    backgroundColor: getCategoryColor(event.category)
+                    backgroundColor: getCategoryColor(event.type)
                   }}
-                  onClick={(e) => e.stopPropagation()} // 이벤트 버블링 방지
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   onClick={(e) => {
-                    e.stopPropagation(); // 이벤트 버블링 방지
+                    e.stopPropagation();
                     onEditEvent(event);
                   }}
                 >

@@ -39,8 +39,8 @@ const Calendar = ({
    * 현재 선택된 필터를 기반으로 일정 타입을 설정
    */
   const handleAddEventClick = () => {
-    const defaultCategory = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : '개인';
-    const defaultType = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : '개인';
+    const defaultCategory = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : 'PERSONAL';
+    const defaultType = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : 'PERSONAL';
     const defaultEvent = {
       title: '',
       date: format(selectedDate, 'yyyy-MM-dd'),
@@ -191,35 +191,41 @@ const Calendar = ({
     // 요일 헤더
     const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
+    // 카테고리 필터 (한글 표시용)
+    const categoryLabels = {
+      '전체': '전체',
+      'COMPANY': '회사',
+      'TEAM': '팀',
+      'PERSONAL': '개인',
+      'TODO': '할일'
+    };
+
     // 카테고리 필터
-    const categories = ['전체', '회사', '팀', '개인', 'TODO'];
+    const categories = ['전체', 'COMPANY', 'TEAM', 'PERSONAL', 'TODO'];
 
     // 카테고리 필터 행
     const categoryFilters = (
       <TableRow>
         <TableCell colSpan={7} align="center" sx={myPageStyles.filterContainer}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, justifyContent: 'center' }}>
-            <Typography variant="subtitle1" sx={{ mr: 2, fontWeight: 'bold' }}>
-              필터
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {categories.map(category => (
-                <Button 
-                  key={category}
-                  variant={categoryFilter === category ? 'contained' : 'outlined'}
-                  onClick={() => onCategoryFilterChange(category)}
-                  sx={{ 
-                    minWidth: '80px',
-                    bgcolor: categoryFilter === category ? '#757575' : 'white',
-                    color: categoryFilter === category ? 'white' : 'black',
-                    border: '1px solid #ccc'
-                  }}
-                >
-                  {category}
-                </Button>
-              ))}
-            </Box>
-          </Box>
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={categoryFilter === category ? "contained" : "outlined"}
+              size="small"
+              onClick={() => onCategoryFilterChange(category)}
+              sx={{ 
+                mx: 0.5,
+                minWidth: '60px',
+                backgroundColor: categoryFilter === category ? getCategoryColor(category) : 'transparent',
+                color: categoryFilter === category ? 'white' : 'inherit',
+                '&:hover': {
+                  backgroundColor: categoryFilter === category ? getCategoryColor(category) : 'rgba(0, 0, 0, 0.04)',
+                }
+              }}
+            >
+              {categoryLabels[category]}
+            </Button>
+          ))}
         </TableCell>
       </TableRow>
     );
