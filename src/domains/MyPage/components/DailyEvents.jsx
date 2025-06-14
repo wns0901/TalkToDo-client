@@ -13,6 +13,9 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { format } from 'date-fns';
 import { myPageStyles } from '../css/MyPage.styles';
 import { getCategoryColor } from '../js/utils';
@@ -22,8 +25,33 @@ const DailyEvents = ({
   filteredEvents, 
   onAddEvent, 
   onEditEvent,
+  onDeleteEvent,
   onDateClick
 }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [menuEventId, setMenuEventId] = React.useState(null);
+
+  const handleMenuOpen = (event, eventId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuEventId(eventId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuEventId(null);
+  };
+  const handleEdit = () => {
+    const event = filteredEvents.find(e => e.id === menuEventId);
+    if (event) onEditEvent(event);
+    handleMenuClose();
+  };
+  const handleDelete = () => {
+    const event = filteredEvents.find(e => e.id === menuEventId);
+    if (event && window.confirm('정말 삭제하시겠습니까?')) {
+      onDeleteEvent(event.id);
+    }
+    handleMenuClose();
+  };
+
   // 일정 추가 버튼 클릭 핸들러
   const handleAddClick = () => {
     onAddEvent({
@@ -106,14 +134,22 @@ const DailyEvents = ({
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditEvent(event);
+                    handleMenuOpen(e, event.id);
                   }}
                 >
-                  <EditIcon fontSize="small" />
+                  <MoreVertIcon fontSize="small" />
                 </IconButton>
               </Box>
             </ListItem>
           ))}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={handleEdit}>수정</MenuItem>
+            <MenuItem onClick={handleDelete}>삭제</MenuItem>
+          </Menu>
         </List>
       ) : (
         <Box sx={myPageStyles.noEvents}>
