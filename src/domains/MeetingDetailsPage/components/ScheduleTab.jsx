@@ -1,6 +1,7 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Alert,
   Box,
@@ -56,6 +57,10 @@ const ScheduleEditModal = ({ open, schedule, onClose, onSave }) => {
     onSave(editedSchedule);
     onClose();
   };
+
+  useEffect(() => {
+    console.log("editedSchedule:", editedSchedule);
+  }, [editedSchedule]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -198,16 +203,6 @@ const ScheduleTab = () => {
 
   const groupedSchedulesByDate = getSchedulesByDate();
 
-  const handleDeleteSchedule = async (id) => {
-    try {
-      await api.delete(`/api/schedules/${id}`);
-      setSchedules((prev) => prev.filter((schedule) => schedule.id !== id));
-      showSnackbar("일정이 삭제되었습니다.");
-    } catch (err) {
-      showSnackbar("일정 삭제에 실패했습니다.", "error");
-    }
-  };
-
   const handleEditClick = (schedule) => {
     setSelectedSchedule(schedule);
     setEditModalOpen(true);
@@ -231,6 +226,17 @@ const ScheduleTab = () => {
       showSnackbar("수정되었습니다.");
     } catch (err) {
       showSnackbar("수정에 실패했습니다.", "error");
+    }
+  };
+
+  const handleAddToMySchedule = async (schedule) => {
+    try {
+      const response = await api.patch(`/api/schedules/my/${schedule.id}`);
+      if (response.status === 200) {
+        showSnackbar("나의 일정에 추가되었습니다.");
+      }
+    } catch (err) {
+      showSnackbar("나의 일정 추가에 실패했습니다.", "error");
     }
   };
 
@@ -306,8 +312,8 @@ const ScheduleTab = () => {
                   <ScheduleItem
                     key={schedule.id}
                     schedule={schedule}
-                    onDelete={handleDeleteSchedule}
                     onEdit={handleEditClick}
+                    onAddToMySchedule={handleAddToMySchedule}
                     formatDateTime={formatDateTime}
                     getScopeColor={getScopeColor}
                   />
@@ -345,8 +351,8 @@ const ScheduleTab = () => {
 
 const ScheduleItem = ({
   schedule,
-  onDelete,
   onEdit,
+  onAddToMySchedule,
   formatDateTime,
   getScopeColor,
 }) => {
@@ -479,18 +485,13 @@ const ScheduleItem = ({
           </MenuItem>
           <MenuItem
             onClick={() => {
-              onDelete(schedule.id);
+              onAddToMySchedule(schedule);
               handleMenuClose();
             }}
-            sx={{
-              color: "error.main",
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
-            <DeleteIcon fontSize="small" sx={{ color: "error.main", mr: 1 }} />
-            <span>삭제</span>
+            <AddIcon fontSize="small" sx={{ mr: 1 }} />
+            <span>나의 일정에 담기</span>
           </MenuItem>
         </Menu>
       </Box>

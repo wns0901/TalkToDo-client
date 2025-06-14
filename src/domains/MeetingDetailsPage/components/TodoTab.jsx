@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -10,43 +10,28 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import AddTaskIcon from "@mui/icons-material/AddTask";
+import api from "../../../apis/baseApi";
+import { useParams } from "react-router-dom";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import koLocale from "date-fns/locale/ko";
 
-// 임시 데이터
-const MOCK_TODOS = [
-  {
-    id: 1,
-    text: "프로젝트 기획서 작성",
-    startDate: "2024-03-20",
-    dueDate: "2024-03-25",
-    assignee: "김범수 과장",
-    type: "todo",
-  },
-  {
-    id: 2,
-    text: "디자인 시안 검토",
-    startDate: "2024-03-21",
-    dueDate: "2024-03-22",
-    assignee: "이지원 대리",
-    type: "todo",
-  },
-  {
-    id: 3,
-    text: "개발 일정 수립",
-    startDate: "2024-03-22",
-    dueDate: "2024-03-23",
-    assignee: "홍길동 사원",
-    type: "todo",
-  },
-];
-
-const TodoTab = ({ meetingId = 1 }) => {
-  const [loading, setLoading] = useState(false);
+const TodoTab = () => {
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [todos, setTodos] = useState(MOCK_TODOS);
+  const [todos, setTodos] = useState([]);
+  const { meetingId } = useParams();
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -54,19 +39,60 @@ const TodoTab = ({ meetingId = 1 }) => {
     severity: "success",
   });
 
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
+
+  // 날짜 유효성 검사 함수
+  const isValidDate = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date);
+  };
+
+  // API로 할 일 목록 가져오기
+  const fetchTodos = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/api/todos/meeting/${meetingId}`);
+      console.log("response:", response.data);
+      setTodos(response.data);
+      setError(null);
+    } catch (err) {
+      setError("할 일 목록을 불러오는데 실패했습니다.");
+      console.error("Error fetching todos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 할 일 목록 가져오기
+  useEffect(() => {
+    console.log("meetingId:", meetingId);
+    if (meetingId) {
+      fetchTodos();
+    }
+  }, [meetingId]);
+
   // 날짜별로 할 일을 그룹화
   const getTodosByDate = () => {
     const grouped = todos.reduce((acc, todo) => {
-      if (!acc[todo.dueDate]) {
-        acc[todo.dueDate] = [];
+      // 날짜가 없거나 잘못된 형식인 경우 "날짜 미정"으로 처리
+      const date =
+        todo.dueDate && isValidDate(todo.dueDate) ? todo.dueDate : "날짜 미정";
+      if (!acc[date]) {
+        acc[date] = [];
       }
-      acc[todo.dueDate].push(todo);
+      acc[date].push(todo);
       return acc;
     }, {});
 
-    // 날짜 정렬
+    // 날짜 정렬 (날짜 미정은 맨 뒤로)
     return Object.keys(grouped)
-      .sort()
+      .sort((a, b) => {
+        if (a === "날짜 미정") return 1;
+        if (b === "날짜 미정") return -1;
+        return a.localeCompare(b);
+      })
       .map((date) => ({
         date,
         todos: grouped[date],
@@ -75,22 +101,46 @@ const TodoTab = ({ meetingId = 1 }) => {
 
   const groupedTodosByDate = getTodosByDate();
 
-  const handleDeleteTodo = (id) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
-    showSnackbar("할 일이 삭제되었습니다.");
+  const handleUpdateTodo = async (id, updated) => {
+    try {
+      await api.put(`/api/todos/${id}`, updated);
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === id ? { ...todo, ...updated } : todo))
+      );
+      showSnackbar("수정되었습니다.");
+      setEditModalOpen(false);
+    } catch (err) {
+      showSnackbar("수정에 실패했습니다.", "error");
+      console.error("Error updating todo:", err);
+    }
   };
 
-  const handleAddDateToMySchedule = (date, dateTodos) => {
-    showSnackbar(
-      `${date} 할 일 ${dateTodos.length}개가 내 할일에 추가되었습니다.`
-    );
+  const handleEditClick = (todo) => {
+    setEditingTodo(todo);
+    setEditModalOpen(true);
   };
 
-  const handleUpdateTodo = (id, updated) => {
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, ...updated } : todo))
-    );
-    showSnackbar("수정되었습니다.");
+  const handleEditModalClose = () => {
+    setEditModalOpen(false);
+    setEditingTodo(null);
+  };
+
+  const handleEditSubmit = () => {
+    if (editingTodo) {
+      handleUpdateTodo(editingTodo.id, editingTodo);
+    }
+  };
+
+  const handleAddToMyTodo = async (todo) => {
+    try {
+      console.log(todo);
+
+      await api.patch(`/api/todos/${todo.id}/add-to-calendar`);
+      showSnackbar("나의 할 일에 추가되었습니다.");
+    } catch (err) {
+      showSnackbar("나의 할 일 추가에 실패했습니다.", "error");
+      console.error("Error adding todo to my list:", err);
+    }
   };
 
   const showSnackbar = (message, severity = "success") => {
@@ -106,7 +156,7 @@ const TodoTab = ({ meetingId = 1 }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "";
+    if (!dateString || !isValidDate(dateString)) return "날짜 미정";
     try {
       const date = new Date(dateString);
       const year = date.getFullYear();
@@ -116,7 +166,7 @@ const TodoTab = ({ meetingId = 1 }) => {
       const dayOfWeek = daysOfWeek[date.getDay()];
       return `${year}.${month}.${day} (${dayOfWeek})`;
     } catch {
-      return dateString;
+      return "날짜 미정";
     }
   };
 
@@ -137,19 +187,12 @@ const TodoTab = ({ meetingId = 1 }) => {
       <Divider sx={{ mb: 3 }} />
 
       <Box>
-        <Typography
-          variant="h6"
-          fontWeight="bold"
-          sx={{ mb: 2, color: "#3E1A11" }}
-        >
-          ToDo
-        </Typography>
         <Box sx={{ p: 0, bgcolor: "grey.50", borderRadius: 1 }}>
           {groupedTodosByDate.length === 0 ? (
             <Typography
               sx={{ textAlign: "center", color: "text.secondary", py: 4 }}
             >
-              ToDo 항목이 없습니다. 새로운 항목을 추가해 보세요.
+              ToDo 항목이 없습니다.
             </Typography>
           ) : (
             groupedTodosByDate.map(({ date, todos }) => (
@@ -161,9 +204,9 @@ const TodoTab = ({ meetingId = 1 }) => {
                   <TodoItem
                     key={todo.id}
                     todo={{ ...todo, num: index + 1 }}
-                    onDelete={handleDeleteTodo}
-                    onUpdate={handleUpdateTodo}
                     formatDate={formatDate}
+                    handleAddToMyTodo={handleAddToMyTodo}
+                    handleEditClick={handleEditClick}
                   />
                 ))}
               </Box>
@@ -171,6 +214,61 @@ const TodoTab = ({ meetingId = 1 }) => {
           )}
         </Box>
       </Box>
+
+      <Dialog
+        open={editModalOpen}
+        onClose={handleEditModalClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>할 일 수정</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="제목"
+              fullWidth
+              value={editingTodo?.title || ""}
+              onChange={(e) =>
+                setEditingTodo((prev) => ({ ...prev, title: e.target.value }))
+              }
+            />
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={koLocale}
+            >
+              <DatePicker
+                label="마감일"
+                value={
+                  editingTodo?.dueDate ? new Date(editingTodo.dueDate) : null
+                }
+                onChange={(newValue) => {
+                  setEditingTodo((prev) => ({
+                    ...prev,
+                    dueDate: newValue
+                      ? newValue.toISOString().split("T")[0]
+                      : null,
+                  }));
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditModalClose}>취소</Button>
+          <Button
+            onClick={handleEditSubmit}
+            variant="contained"
+            color="primary"
+          >
+            저장
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}
@@ -190,7 +288,7 @@ const TodoTab = ({ meetingId = 1 }) => {
   );
 };
 
-const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
+const TodoItem = ({ todo, handleEditClick, formatDate, handleAddToMyTodo }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -216,13 +314,6 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
       }}
     >
       <Typography
-        variant="body2"
-        color="text.secondary"
-        sx={{ minWidth: 48, fontWeight: 700 }}
-      >
-        할 일{todo.num}
-      </Typography>
-      <Typography
         variant="body1"
         sx={{
           flex: 2,
@@ -230,7 +321,7 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
           wordBreak: "break-all",
         }}
       >
-        {todo.text}
+        {todo.title}
       </Typography>
       <Box
         sx={{
@@ -241,20 +332,6 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
           gap: 0.5,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography
-            variant="caption"
-            sx={{ color: "text.secondary", fontWeight: 500 }}
-          >
-            시작일
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: "grey.700", fontWeight: 700 }}
-          >
-            {formatDate(todo.startDate)}
-          </Typography>
-        </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography
             variant="caption"
@@ -289,7 +366,7 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
           variant="caption"
           sx={{ color: "grey.700", fontWeight: 700 }}
         >
-          {todo.assignee || "-"}
+          {todo.assigneeName || "-"}
         </Typography>
       </Box>
       <Box>
@@ -299,7 +376,7 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
         <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
           <MenuItem
             onClick={() => {
-              onUpdate(todo.id, todo);
+              handleEditClick(todo);
               handleMenuClose();
             }}
             sx={{ display: "flex", alignItems: "center", gap: 1 }}
@@ -309,18 +386,13 @@ const TodoItem = ({ todo, onDelete, onUpdate, formatDate }) => {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              onDelete(todo.id);
+              handleAddToMyTodo(todo);
               handleMenuClose();
             }}
-            sx={{
-              color: "error.main",
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-            }}
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
           >
-            <DeleteIcon fontSize="small" sx={{ color: "error.main", mr: 1 }} />
-            <span>삭제</span>
+            <AddTaskIcon fontSize="small" sx={{ mr: 1 }} />
+            <span>나의 todo에 담기</span>
           </MenuItem>
         </Menu>
       </Box>
