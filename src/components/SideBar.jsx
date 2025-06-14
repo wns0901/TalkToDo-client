@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Box,
   Container,
@@ -12,18 +12,24 @@ import {
   MenuItem,
 } from "@mui/material";
 import EventNoteIcon from "@mui/icons-material/EventNote";
-import { Link, useLocation } from "react-router-dom";
-import { getMeetings } from "../apis/fakeApi";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import api from "../apis/baseApi";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import { LoginContext } from "../contexts/LoginContextProvider";
+import { useLogin } from "../contexts/LoginContextProvider";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const SideBar = () => {
   const [meetings, setMeetings] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const { userInfo, isTokenSet, logout } = useContext(LoginContext);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { sidebarKey } = useLogin();
 
   // 현재 URL에서 meetingId 추출
   const currentMeetingId = (() => {
@@ -33,11 +39,24 @@ const SideBar = () => {
 
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetings();
-      setMeetings(response);
+      if (!isTokenSet || !userInfo) {
+        console.log(
+          "토큰이 아직 설정되지 않았거나 사용자 정보가 없습니다. 잠시만 기다려주세요..."
+        );
+        return;
+      }
+
+      try {
+        const userId = userInfo.id;
+        const response = await api.get("/api/meetings/user/" + userId);
+        setMeetings(response.data);
+      } catch (error) {
+        console.error("미팅 목록을 가져오는데 실패했습니다:", error);
+      }
     };
+
     fetchMeetings();
-  }, []);
+  }, [userInfo, isTokenSet, sidebarKey]);
 
   const handleMoreClick = (event, meetingId) => {
     setAnchorEl(event.currentTarget);
@@ -68,8 +87,8 @@ const SideBar = () => {
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 4,
         }}
       >
@@ -79,7 +98,6 @@ const SideBar = () => {
           to="/"
           fontWeight="bold"
           sx={{
-            mb: 2,
             cursor: "pointer",
             color: "inherit",
             textDecoration: "none",
@@ -87,6 +105,27 @@ const SideBar = () => {
         >
           Talk to Do
         </Typography>
+        <Button
+          variant="text"
+          color="inherit"
+          onClick={() => {
+            logout();
+          }}
+          startIcon={<LogoutIcon />}
+          sx={{ color: "black" }}
+        >
+          {/* 로그아웃 텍스트 제거 */}
+        </Button>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          mb: 4,
+        }}
+      >
         <Button
           component={Link}
           to="/my-schedule"
@@ -113,7 +152,6 @@ const SideBar = () => {
                   <MoreVertIcon />
                 </IconButton>
               }
-              button
               component={Link}
               to={`/meetings/${meeting.id}`}
               sx={{

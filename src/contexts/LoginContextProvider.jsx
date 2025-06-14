@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
@@ -12,12 +12,18 @@ LoginContext.displayName = "LoginContextName";
 
 const LoginContextProvider = ({ children }) => {
   const navigate = useNavigate();
+  const [isTokenSet, setIsTokenSet] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [sidebarKey, setSidebarKey] = useState(0);
 
   // localStorage 데이터 파싱 시 에러 처리 추가
   const getLocalStorageData = () => {
     try {
       const data = localStorage.getItem("data");
-      return data ? JSON.parse(data) : { isLoginData: null, userInfoData: null, rolesData: null };
+      return data
+        ? JSON.parse(data)
+        : { isLoginData: null, userInfoData: null, rolesData: null };
     } catch (error) {
       console.error("localStorage 데이터 파싱 실패:", error);
       return { isLoginData: null, userInfoData: null, rolesData: null };
@@ -28,7 +34,9 @@ const LoginContextProvider = ({ children }) => {
 
   const [isLogin, setIsLogin] = useState(isLoginData || false);
   const [userInfo, setUserInfo] = useState(userInfoData || {});
-  const [roles, setRoles] = useState(rolesData || { isMember: false, isAdmin: false });
+  const [roles, setRoles] = useState(
+    rolesData || { isMember: false, isAdmin: false }
+  );
 
   const loginCheck = async (isAuthPage = false) => {
     const accessToken = Cookies.get("accessToken");
@@ -45,6 +53,7 @@ const LoginContextProvider = ({ children }) => {
 
     console.log("쿠키에 JWT(accessToken) 이 저장되어 있음");
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+    setIsTokenSet(true);
 
     try {
       response = await auth.userInfo();
@@ -84,26 +93,12 @@ const LoginContextProvider = ({ children }) => {
       const { authorization } = headers;
 
       const accessToken = authorization.replace("Bearer ", "");
-
-      // 토큰 저장
-      Cookies.set("accessToken", accessToken);
-
-      try {
-        // JWT 토큰 payload에서 사용자 정보 추출
-        const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
-        const userData = {
-          id: tokenPayload.id,
-          username: tokenPayload.username,
-          roles: tokenPayload.roles || [] // roles 정보 추가
-        };
-
-        // 사용자 정보 설정
-        loginSetting(userData, accessToken);
-
+      
+      console.log(response.status);
+      if (response.status === 200) {
+        Cookies.set("accessToken", accessToken);
+        loginCheck();
         navigate("/");
-      } catch (error) {
-        console.error("JWT 토큰 파싱 실패:", error);
-        Swal.alert("로그인 실패", "토큰 처리 중 오류가 발생했습니다.", "error");
       }
     } catch (error) {
       console.error(`로그인 error:`, error);
@@ -125,28 +120,32 @@ const LoginContextProvider = ({ children }) => {
       (result) => {
         if (result.isConfirmed) {
           logoutSetting();
-          navigate("/");
+          navigate("/login");
         }
       }
     );
   };
 
   const loginSetting = (userData, accessToken) => {
-    const { id, username, roles: userRoles = [] } = userData;
+    const { id, username, roles: userRoles = [], email } = userData;
 
-    console.log(`\n      loginSetting()\n      id : ${id}\n      username : ${username}\n      roles : ${userRoles}\n    `);
+    console.log(
+      `\n      loginSetting()\n      id : ${id}\n      username : ${username}\n      roles : ${userRoles}\n    
+      email : ${email}\n    `
+    );
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+    setIsTokenSet(true);
 
     setIsLogin(true);
 
-    const updateUserInfo = { id, username };
+    const updateUserInfo = { id, username, email };
     setUserInfo(updateUserInfo);
 
     // roles 정보 업데이트
     const updatedRoles = {
       isMember: userRoles.includes("MEMBER"),
-      isAdmin: userRoles.includes("ADMIN")
+      isAdmin: userRoles.includes("ADMIN"),
     };
     setRoles(updatedRoles);
 
@@ -163,17 +162,39 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
+    setIsTokenSet(false);
     setRoles({ isMember: false, isAdmin: false });
+    setSidebarKey(0);
+    setUser(null);
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
 
     localStorage.removeItem("data");
+    navigate("/login");
+  };
+
+  const refreshSidebar = () => {
+    setSidebarKey((prev) => prev + 1);
   };
 
   return (
     <LoginContext.Provider
-      value={{ isLogin, userInfo, roles, loginCheck, login, logout }}
+      value={{
+        isLogin,
+        userInfo,
+        roles,
+        loginCheck,
+        login,
+        logout,
+        isTokenSet,
+        isLoggedIn,
+        setIsLoggedIn,
+        user,
+        setUser,
+        sidebarKey,
+        refreshSidebar,
+      }}
     >
       {children}
     </LoginContext.Provider>
@@ -182,10 +203,4 @@ const LoginContextProvider = ({ children }) => {
 
 export default LoginContextProvider;
 
-export const useLogin = () => {
-  const context = React.useContext(LoginContext);
-  if (!context) {
-    throw new Error("useLogin must be used within a LoginContextProvider");
-  }
-  return context;
-};
+export const useLogin = () => useContext(LoginContext);
