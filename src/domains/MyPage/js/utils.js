@@ -23,7 +23,6 @@ export const filterEventsByDate = (events, dateStr, categoryFilter) => {
   const targetDate = new Date(dateStr);
   let filtered = events.filter(event => {
     if (!event.startDate || !event.endDate) {
-      console.warn('날짜 정보 없음:', event);
       return false;
     }
     const startDate = new Date(event.startDate);
@@ -40,7 +39,9 @@ export const filterEventsByDate = (events, dateStr, categoryFilter) => {
   });
   
   // 카테고리 필터 적용
-  if (categoryFilter !== '전체') {
+  if (categoryFilter === 'TODO') {
+    filtered = filtered.filter(event => event.type === 'TODO');
+  } else if (categoryFilter !== '전체') {
     filtered = filtered.filter(event => event.category === categoryFilter || event.type === categoryFilter);
   }
   

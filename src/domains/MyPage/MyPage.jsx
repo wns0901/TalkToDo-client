@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Paper } from "@mui/material";
-import { format, addMonths, subMonths, addDays } from "date-fns";
+import { Container, Box, Paper } from "@mui/material";
+import { format, addMonths, subMonths } from "date-fns";
 import { myPageStyles } from "./css/MyPage.styles";
-import api from "../../apis/baseApi";
 import { useLogin } from "../../contexts/LoginContextProvider";
 import Cookies from "js-cookie";
 import * as todoApi from "../../apis/todo";
 import * as scheduleApi from "../../apis/schedule";
 import * as categoryApi from "../../apis/category";
 import { useNavigate } from "react-router-dom";
+import { addTodoToCalendar } from "../../apis/schedule";
 
 // 분리된 컴포넌트들 가져오기
 import Calendar from "./components/Calendar";
@@ -37,6 +37,7 @@ const MyPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [schedules, setSchedules] = useState([]);
+  const [todos, setTodos] = useState([]);
 
   // 필터 상태
   const [categoryFilter, setCategoryFilter] = useState("전체");
@@ -107,6 +108,8 @@ const MyPage = () => {
         (item, idx, arr) => arr.findIndex(e => e.id === item.id) === idx
       );
       setSchedules(uniqueSchedules);
+      setTodos(todosRes.data);
+      console.log('fetchAllData todos:', todosRes.data);
       setCategories(["전체", ...categoriesRes.data]);
       setLoading(false);
     } catch (err) {
@@ -136,14 +139,14 @@ const MyPage = () => {
 
   // 날짜 또는 필터가 변경될 때 일정 필터링
   useEffect(() => {
-    if (!selectedDate || schedules.length === 0) return;
-
-    const dateStr = format(selectedDate, "yyyy-MM-dd");
-    const filtered = filterEventsByDate(schedules, dateStr, categoryFilter);
-
-    setFilteredEvents(filtered);
-    setSelectedDateEvents(filtered);
-  }, [selectedDate, categoryFilter, schedules]);
+    console.log('schedules 배열:', schedules);
+    console.log('categoryFilter:', categoryFilter);
+    if (selectedDate) {
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const filtered = filterEventsByDate(schedules, dateStr, categoryFilter);
+      console.log('filterEventsByDate 결과:', filtered);
+    }
+  }, [schedules, categoryFilter, selectedDate]);
 
   // 이전달 이동 핸들러
   const prevMonth = () => {
@@ -181,15 +184,12 @@ const MyPage = () => {
   // 새 일정 저장 핸들러
   const handleSaveNewEvent = async () => {
     if (!newEvent.title.trim()) return;
-    
     const accessToken = Cookies.get("accessToken");
-    
     if (!accessToken) {
       alert("로그인이 필요합니다.");
       navigate("/login");
       return;
     }
-
     try {
       // 백엔드 요구사항에 맞는 형식으로 데이터 구성
       const scheduleData = {
@@ -206,10 +206,20 @@ const MyPage = () => {
       console.log('[일정 추가] 서버로 보내는 데이터:', scheduleData);
       // 백엔드 API 호출
       const response = await scheduleApi.createSchedule(scheduleData);
-      
       alert("일정이 추가되었습니다: " + newEvent.title);
       setAddEventModalOpen(false);
-      fetchAllData();
+      // fetchAllData() 대신 schedules에 새 일정 직접 추가
+      const newSchedule = { ...scheduleData, id: response.data?.id || Date.now() };
+      setSchedules((prev) => [...prev, newSchedule]);
+      // 선택된 날짜의 일정도 갱신
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const filtered = filterEventsByDate(
+        [...schedules, newSchedule],
+        dateStr,
+        categoryFilter
+      );
+      setFilteredEvents(filtered);
+      setSelectedDateEvents(filtered);
     } catch (e) {
       if (e.response?.status === 403) {
         alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
@@ -241,7 +251,7 @@ const MyPage = () => {
   };
 
   // 할일을 일정표에 추가하는 핸들러
-  const handleAddTodoToCalendar = (todo) => {
+  const handleAddTodoToCalendar = async (todo) => {
     if (!todo) return;
 
     // 이미 일정에 있는지 확인
@@ -254,26 +264,24 @@ const MyPage = () => {
       return;
     }
 
-    // 할일을 새로운 TODO 타입 일정으로 복제하여 추가
-    const todoForCalendar = {
-      ...todo,
-      id: Date.now(), // 새로운 ID 부여
-      originalTodoId: todo.id, // 원본 할일 ID 저장
-      isTodo: true,
-      category: "TODO",
-      type: "TODO",
-      displayInCalendar: true,
-    };
-
-    // 일정 목록에 새 TODO 추가
-    setSchedules((prev) => {
-      const updated = [...prev, todoForCalendar];
-      // localStorage에 저장
-      localStorage.setItem("schedules", JSON.stringify(updated));
-      return updated;
-    });
-
-    alert("내 할일이 일정표에 추가되었습니다.");
+    try {
+      const token = Cookies.get('accessToken');
+      const data = {
+        startDate: todo.startDate,
+        endDate: todo.dueDate,
+        startTime: todo.startTime || '09:00:00',
+        endTime: todo.endTime || '10:00:00',
+        location: todo.location || '',
+        description: todo.description || '',
+        displayInCalendar: true
+      };
+      const newSchedule = await addTodoToCalendar(todo.id, data, token);
+      if (newSchedule) {
+        setSchedules((prev) => [...prev, newSchedule]);
+      }
+    } catch (e) {
+      alert("일정에 추가 실패");
+    }
   };
 
   // 할일을 일정표에서 제거하는 핸들러
@@ -350,7 +358,21 @@ const MyPage = () => {
       console.log('[일정 수정] 서버로 보내는 데이터:', updateData);
       await scheduleApi.updateSchedule(editEvent.id, updateData);
       setEditEventModalOpen(false);
-      fetchAllData();
+      // fetchAllData() 대신 schedules에서 해당 일정만 교체
+      setSchedules((prev) => prev.map(item =>
+        item.id === editEvent.id ? { ...item, ...updateData } : item
+      ));
+      // 선택된 날짜의 일정도 갱신
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const filtered = filterEventsByDate(
+        schedules.map(item =>
+          item.id === editEvent.id ? { ...item, ...updateData } : item
+        ),
+        dateStr,
+        categoryFilter
+      );
+      setFilteredEvents(filtered);
+      setSelectedDateEvents(filtered);
     } catch (e) {
       alert('일정 수정에 실패했습니다.');
     }
@@ -416,6 +438,37 @@ const MyPage = () => {
     setCategoryModalOpen(false);
   };
 
+  // 일정 삭제 핸들러
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await scheduleApi.deleteSchedule(eventId);
+      setSchedules((prev) => prev.filter(item => item.id !== eventId));
+      // 선택된 날짜의 일정도 갱신
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const filtered = filterEventsByDate(
+        schedules.filter(item => item.id !== eventId),
+        dateStr,
+        categoryFilter
+      );
+      setFilteredEvents(filtered);
+      setSelectedDateEvents(filtered);
+    } catch (e) {
+      alert('일정 삭제에 실패했습니다.');
+    }
+  };
+
+  // 할일 수정 핸들러 (TodoList에서 호출)
+  const handleEditTodo = async (id, updateData) => {
+    try {
+      await todoApi.updateTodo(id, updateData);
+      setSchedules((prev) => prev.map(item =>
+        item.id === id ? { ...item, ...updateData } : item
+      ));
+    } catch (e) {
+      alert('할일 수정에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return <LoadingView />;
   }
@@ -452,7 +505,8 @@ const MyPage = () => {
 
         <Box sx={{ flex: 1 }}>
           <TodoList
-            schedules={schedules}
+            todos={todos}
+            setTodos={setTodos}
             onEditEvent={handleOpenEditModal}
             onDeleteEvent={handleDeletePersonalTodo}
             onDateClick={onDateClick}
@@ -460,6 +514,7 @@ const MyPage = () => {
             onRemoveFromCalendar={handleRemoveTodoFromCalendar}
             onDataChanged={fetchAllData}
             userInfo={userInfo}
+            onEditTodo={handleEditTodo}
           />
         </Box>
       </Box>
@@ -469,6 +524,7 @@ const MyPage = () => {
         filteredEvents={filteredEvents}
         onAddEvent={handleOpenAddEventModal}
         onEditEvent={handleOpenEditModal}
+        onDeleteEvent={handleDeleteEvent}
         onDateClick={onDateClick}
       />
 
@@ -478,6 +534,7 @@ const MyPage = () => {
         onClose={handleCloseEventModal}
         events={selectedDateEvents}
         onEditEvent={handleOpenEditModal}
+        onDeleteEvent={handleDeleteEvent}
         onDateClick={onDateClick}
       />
 

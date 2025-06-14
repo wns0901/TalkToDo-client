@@ -15,9 +15,12 @@ import {
   TextField, 
   FormControl, 
   Divider,
-  Paper
+  Paper,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { format } from 'date-fns';
 import { getCategoryColor, formatDateRange } from '../js/utils';
 
@@ -27,8 +30,33 @@ export const EventModal = ({
   onClose, 
   events, 
   onEditEvent,
+  onDeleteEvent,
   onDateClick
 }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [menuEventId, setMenuEventId] = React.useState(null);
+
+  const handleMenuOpen = (event, eventId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuEventId(eventId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuEventId(null);
+  };
+  const handleEdit = () => {
+    const event = events.find(e => e.id === menuEventId);
+    if (event) onEditEvent(event);
+    handleMenuClose();
+  };
+  const handleDelete = () => {
+    const event = events.find(e => e.id === menuEventId);
+    if (event && window.confirm('정말 삭제하시겠습니까?')) {
+      onDeleteEvent(event.id);
+    }
+    handleMenuClose();
+  };
+
   // 일정 날짜로 이동 핸들러
   const handleDateClick = (event) => {
     // 날짜 객체 생성
@@ -92,15 +120,23 @@ export const EventModal = ({
                   size="small" 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditEvent(event);
+                    handleMenuOpen(e, event.id);
                   }}
                 >
-                  <EditIcon fontSize="small" />
+                  <MoreVertIcon fontSize="small" />
                 </IconButton>
               </Box>
             </ListItem>
           ))}
         </List>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem onClick={handleEdit}>수정</MenuItem>
+          <MenuItem onClick={handleDelete}>삭제</MenuItem>
+        </Menu>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>닫기</Button>
@@ -444,9 +480,6 @@ export const EventDetailModal = ({
         <Paper sx={{ p: 2, mb: 2 }}>
           <Typography variant="h6" gutterBottom>
             {selectedEvent.title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            {selectedEvent.description}
           </Typography>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             {selectedEvent.startDate} {selectedEvent.startTime} - {selectedEvent.endTime}
