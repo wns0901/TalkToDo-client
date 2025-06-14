@@ -3,7 +3,7 @@ import {
   CircularProgress,
   Container,
   Paper,
-  Snackbar
+  Snackbar,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -12,9 +12,10 @@ import { getMeetingDetails } from "../../apis/fakeApi";
 import TabBar from "../../components/TabBar";
 import EmailSendingModal from "./components/EmailSendingModal";
 import MeetingNotesTab from "./components/MeetingNotesTab";
-import TodoScheduleTab from "./components/TodoScheduleTab";
-import TotalMeetingComponent from "./components/TotalMeetingComponent";
+import ScheduleTab from "./components/ScheduleTab";
+import TodoTab from "./components/TodoTab";
 import { meetingDetailsStyles } from "./css/MeetingDetailsPage.styles";
+import TotalMeetingComponent from "./components/TotalMeetingComponent";
 
 /**
  * 회의 상세 페이지 컴포넌트
@@ -130,15 +131,16 @@ const MeetingDetailsPage = () => {
         />
 
         <TabPanel value={activeTabIndex} index={0}>
-          <TotalMeetingComponent />
+          <TotalMeetingComponent /> 
         </TabPanel>
-
         <TabPanel value={activeTabIndex} index={1}>
-          <MeetingNotesTab meetingId={meetingData.id} />
+          <MeetingNotesTab />
         </TabPanel>
-
         <TabPanel value={activeTabIndex} index={2}>
-          <TodoScheduleTab meetingId={meetingData.id} />
+          <ScheduleTab />
+        </TabPanel>
+        <TabPanel value={activeTabIndex} index={3}>
+          <TodoTab />
         </TabPanel>
       </Paper>
 

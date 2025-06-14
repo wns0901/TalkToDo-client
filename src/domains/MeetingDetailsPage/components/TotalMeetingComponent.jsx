@@ -23,6 +23,16 @@ function formatTime(seconds) {
     .padStart(2, "0")}`;
 }
 
+// 화자 ID를 읽기 쉬운 형식으로 변환하는 함수
+const formatSpeaker = (speakerId) => {
+  const match = speakerId.match(/SPEAKER_(\d+)/);
+  if (match) {
+    const number = parseInt(match[1]) + 1;
+    return `화자${number}`;
+  }
+  return speakerId;
+};
+
 const TotalMeetingComponent = () => {
   const location = useLocation();
   const meetingId = location.pathname.split("/").pop();
@@ -155,7 +165,7 @@ const TotalMeetingComponent = () => {
               variant="body2"
               sx={{ fontWeight: 600, mr: 1, minWidth: 50 }}
             >
-              화자1:
+              {formatSpeaker(item.speaker)}
             </Typography>
             <TextField
               variant="outlined"
