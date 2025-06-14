@@ -14,9 +14,13 @@ import {
   IconButton, 
   TextField, 
   FormControl, 
-  Divider
+  Divider,
+  Paper,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { format } from 'date-fns';
 import { getCategoryColor, formatDateRange } from '../js/utils';
 
@@ -26,8 +30,33 @@ export const EventModal = ({
   onClose, 
   events, 
   onEditEvent,
+  onDeleteEvent,
   onDateClick
 }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [menuEventId, setMenuEventId] = React.useState(null);
+
+  const handleMenuOpen = (event, eventId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuEventId(eventId);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuEventId(null);
+  };
+  const handleEdit = () => {
+    const event = events.find(e => e.id === menuEventId);
+    if (event) onEditEvent(event);
+    handleMenuClose();
+  };
+  const handleDelete = () => {
+    const event = events.find(e => e.id === menuEventId);
+    if (event && window.confirm('정말 삭제하시겠습니까?')) {
+      onDeleteEvent(event.id);
+    }
+    handleMenuClose();
+  };
+
   // 일정 날짜로 이동 핸들러
   const handleDateClick = (event) => {
     // 날짜 객체 생성
@@ -91,15 +120,23 @@ export const EventModal = ({
                   size="small" 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditEvent(event);
+                    handleMenuOpen(e, event.id);
                   }}
                 >
-                  <EditIcon fontSize="small" />
+                  <MoreVertIcon fontSize="small" />
                 </IconButton>
               </Box>
             </ListItem>
           ))}
         </List>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          <MenuItem onClick={handleEdit}>수정</MenuItem>
+          <MenuItem onClick={handleDelete}>삭제</MenuItem>
+        </Menu>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>닫기</Button>
@@ -196,12 +233,18 @@ export const AddEventModal = ({
       <DialogContent>
         <Box sx={{ pt: 1, pb: 2 }}>
           <TextField
-            autoFocus
             fullWidth
-            margin="dense"
-            label="일정 제목"
+            label="제목"
             name="title"
             value={newEvent.title}
+            onChange={onChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="장소"
+            name="location"
+            value={newEvent.location}
             onChange={onChange}
             sx={{ mb: 2 }}
           />
@@ -255,28 +298,22 @@ export const AddEventModal = ({
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Chip
-                label="전체"
-                onClick={() => onChange({ target: { name: 'type', value: '전체' } })}
-                variant={newEvent.type === '전체' ? "filled" : "outlined"}
-                sx={{ bgcolor: newEvent.type === '전체' ? getCategoryColor('전체') : undefined }}
-              />
-              <Chip
-                label="개인"
-                onClick={() => onChange({ target: { name: 'type', value: '개인' } })}
-                variant={newEvent.type === '개인' ? "filled" : "outlined"}
-                sx={{ bgcolor: newEvent.type === '개인' ? getCategoryColor('개인') : undefined }}
-              />
-              <Chip
                 label="회사"
-                onClick={() => onChange({ target: { name: 'type', value: '회사' } })}
-                variant={newEvent.type === '회사' ? "filled" : "outlined"}
-                sx={{ bgcolor: newEvent.type === '회사' ? getCategoryColor('회사') : undefined }}
+                onClick={() => onChange({ target: { name: 'type', value: 'COMPANY' } })}
+                variant={newEvent.type === 'COMPANY' ? "filled" : "outlined"}
+                sx={{ bgcolor: newEvent.type === 'COMPANY' ? getCategoryColor('COMPANY') : undefined }}
               />
               <Chip
                 label="팀"
-                onClick={() => onChange({ target: { name: 'type', value: '팀' } })}
-                variant={newEvent.type === '팀' ? "filled" : "outlined"}
-                sx={{ bgcolor: newEvent.type === '팀' ? getCategoryColor('팀') : undefined }}
+                onClick={() => onChange({ target: { name: 'type', value: 'TEAM' } })}
+                variant={newEvent.type === 'TEAM' ? "filled" : "outlined"}
+                sx={{ bgcolor: newEvent.type === 'TEAM' ? getCategoryColor('TEAM') : undefined }}
+              />
+              <Chip
+                label="개인"
+                onClick={() => onChange({ target: { name: 'type', value: 'PERSONAL' } })}
+                variant={newEvent.type === 'PERSONAL' ? "filled" : "outlined"}
+                sx={{ bgcolor: newEvent.type === 'PERSONAL' ? getCategoryColor('PERSONAL') : undefined }}
               />
             </Box>
           </FormControl>
@@ -331,10 +368,30 @@ export const EditEventModal = ({
           <TextField
             fullWidth
             margin="dense"
+            label="장소"
+            name="location"
+            value={editEvent.location}
+            onChange={onChange}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            margin="dense"
             label="시작 날짜"
             type="date"
             name="startDate"
             value={editEvent.startDate}
+            onChange={onChange}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            margin="dense"
+            label="시작 시간"
+            type="time"
+            name="startTime"
+            value={editEvent.startTime || ""}
             onChange={onChange}
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
@@ -350,34 +407,39 @@ export const EditEventModal = ({
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
           />
+          <TextField
+            fullWidth
+            margin="dense"
+            label="종료 시간"
+            type="time"
+            name="endTime"
+            value={editEvent.endTime || ""}
+            onChange={onChange}
+            InputLabelProps={{ shrink: true }}
+            sx={{ mb: 2 }}
+          />
           <FormControl fullWidth>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               타입
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Chip
-                label="전체"
-                onClick={() => onChange({ target: { name: 'type', value: '전체' } })}
-                variant={editEvent.type === '전체' ? "filled" : "outlined"}
-                sx={{ bgcolor: editEvent.type === '전체' ? getCategoryColor('전체') : undefined }}
-              />
-              <Chip
-                label="개인"
-                onClick={() => onChange({ target: { name: 'type', value: '개인' } })}
-                variant={editEvent.type === '개인' ? "filled" : "outlined"}
-                sx={{ bgcolor: editEvent.type === '개인' ? getCategoryColor('개인') : undefined }}
-              />
-              <Chip
                 label="회사"
-                onClick={() => onChange({ target: { name: 'type', value: '회사' } })}
-                variant={editEvent.type === '회사' ? "filled" : "outlined"}
-                sx={{ bgcolor: editEvent.type === '회사' ? getCategoryColor('회사') : undefined }}
+                onClick={() => onChange({ target: { name: 'type', value: 'COMPANY' } })}
+                variant={editEvent.type === 'COMPANY' ? "filled" : "outlined"}
+                sx={{ bgcolor: editEvent.type === 'COMPANY' ? getCategoryColor('COMPANY') : undefined }}
               />
               <Chip
                 label="팀"
-                onClick={() => onChange({ target: { name: 'type', value: '팀' } })}
-                variant={editEvent.type === '팀' ? "filled" : "outlined"}
-                sx={{ bgcolor: editEvent.type === '팀' ? getCategoryColor('팀') : undefined }}
+                onClick={() => onChange({ target: { name: 'type', value: 'TEAM' } })}
+                variant={editEvent.type === 'TEAM' ? "filled" : "outlined"}
+                sx={{ bgcolor: editEvent.type === 'TEAM' ? getCategoryColor('TEAM') : undefined }}
+              />
+              <Chip
+                label="개인"
+                onClick={() => onChange({ target: { name: 'type', value: 'PERSONAL' } })}
+                variant={editEvent.type === 'PERSONAL' ? "filled" : "outlined"}
+                sx={{ bgcolor: editEvent.type === 'PERSONAL' ? getCategoryColor('PERSONAL') : undefined }}
               />
             </Box>
           </FormControl>
@@ -393,6 +455,53 @@ export const EditEventModal = ({
         >
           저장
         </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// 일정 상세 모달
+export const EventDetailModal = ({ 
+  isOpen, 
+  onClose, 
+  selectedEvent 
+}) => {
+  if (!selectedEvent) return null;
+  
+  return (
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>일정 상세</DialogTitle>
+      <DialogContent>
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            {selectedEvent.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            {selectedEvent.startDate} {selectedEvent.startTime} - {selectedEvent.endTime}
+          </Typography>
+          {selectedEvent.location && (
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              장소: {selectedEvent.location}
+            </Typography>
+          )}
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            담당자: {selectedEvent.assignee}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            상태: {selectedEvent.status}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            타입: {selectedEvent.type}
+          </Typography>
+        </Paper>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>닫기</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,4 +1,3 @@
-
 import api from "./baseApi";
 
 // 일정 전체 조회
@@ -9,7 +8,23 @@ export const createSchedule = (schedule) => api.post(`/api/schedules`, schedule)
 export const updateSchedule = (id, schedule) => api.put(`/api/schedules/${id}`, schedule);
 // 일정 삭제
 export const deleteSchedule = (id) => api.delete(`/api/schedules/${id}`);
-// 할일을 캘린더에 추가
-export const addTodoToCalendar = (todoId, schedule) => api.post(`/api/schedules/todo/${todoId}/calendar`, schedule);
-// 할일을 캘린더에서 제거
-export const removeTodoFromCalendar = (todoId) => api.delete(`/api/schedules/todo/${todoId}/calendar`); 
+
+export async function addTodoToCalendar(todoId, data, token) {
+  return fetch(`/api/schedules/todo/${todoId}/calendar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  }).then(res => res.json());
+}
+
+export async function removeTodoFromCalendar(todoId, token) {
+  return fetch(`/api/schedules/todo/${todoId}/calendar`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+} 
