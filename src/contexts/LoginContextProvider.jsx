@@ -127,10 +127,11 @@ const LoginContextProvider = ({ children }) => {
   };
 
   const loginSetting = (userData, accessToken) => {
-    const { id, username, roles: userRoles = [] } = userData;
+    const { id, username, roles: userRoles = [], email } = userData;
 
     console.log(
-      `\n      loginSetting()\n      id : ${id}\n      username : ${username}\n      roles : ${userRoles}\n    `
+      `\n      loginSetting()\n      id : ${id}\n      username : ${username}\n      roles : ${userRoles}\n    
+      email : ${email}\n    `
     );
 
     api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
@@ -138,7 +139,7 @@ const LoginContextProvider = ({ children }) => {
 
     setIsLogin(true);
 
-    const updateUserInfo = { id, username };
+    const updateUserInfo = { id, username, email };
     setUserInfo(updateUserInfo);
 
     // roles 정보 업데이트
@@ -161,11 +162,16 @@ const LoginContextProvider = ({ children }) => {
   const logoutSetting = () => {
     setIsLogin(false);
     setUserInfo(null);
+    setIsTokenSet(false);
+    setRoles({ isMember: false, isAdmin: false });
+    setSidebarKey(0);
+    setUser(null);
 
     Cookies.remove("accessToken");
     api.defaults.headers.common.Authorization = undefined;
 
     localStorage.removeItem("data");
+    navigate("/login");
   };
 
   const refreshSidebar = () => {

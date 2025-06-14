@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
 import {
-  Box,
+  Alert,
+  CircularProgress,
   Container,
   Paper,
-  Typography,
-  CircularProgress,
-  Alert,
-  Snackbar,
+  Snackbar
 } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import api from "../../apis/baseApi";
+import { getMeetingDetails } from "../../apis/fakeApi";
+import TabBar from "../../components/TabBar";
+import EmailSendingModal from "./components/EmailSendingModal";
 import MeetingNotesTab from "./components/MeetingNotesTab";
 import TodoScheduleTab from "./components/TodoScheduleTab";
-import TabBar from "../../components/TabBar";
-import { getMeetingDetails } from "../../apis/fakeApi";
-import { meetingDetailsStyles } from "./css/MeetingDetailsPage.styles";
 import TotalMeetingComponent from "./components/TotalMeetingComponent";
-import EmailSendingModal from "./components/EmailSendingModal";
+import { meetingDetailsStyles } from "./css/MeetingDetailsPage.styles";
 
 /**
  * 회의 상세 페이지 컴포넌트
@@ -31,7 +31,7 @@ const MeetingDetailsPage = () => {
   });
   const [emailModalOpen, setEmailModalOpen] = useState(false);
 
-  const meetingId = 1;
+  const { meetingId } = useParams();
 
   useEffect(() => {
     fetchMeetingDetails(meetingId);
@@ -60,7 +60,7 @@ const MeetingDetailsPage = () => {
   /**
    * 공유 기능 핸들러
    */
-  const handleShare = (action) => {
+  const handleShare = async (action) => {
     const shareMessages = {
       docs: "Docs 다운로드를 시작합니다.",
       email: "메일로 회의 자료를 발송합니다.",
@@ -72,6 +72,16 @@ const MeetingDetailsPage = () => {
       setEmailModalOpen(true);
       return;
     }
+
+    if (action === "docs") {
+      const res = await api.get(`api/meetings/${meetingId}/docx`);
+      const docsUrl = res.data;
+      console.log(docsUrl);
+
+      window.open(docsUrl, "_blank");
+      return;
+    }
+
     const message = shareMessages[action] || shareMessages.default;
     setSnackbar({
       open: true,

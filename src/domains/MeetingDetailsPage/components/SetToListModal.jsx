@@ -16,6 +16,7 @@ import {
   Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import api from '../../../apis/baseApi';
 
 const SetToListModal = ({ setToList, onClose }) => {
   const [peopleList, setPeopleList] = useState([]);
@@ -26,7 +27,8 @@ const SetToListModal = ({ setToList, onClose }) => {
 
   useEffect(() => {
     (async () => {
-      const data = await fakeApi.getPeopleList();
+      const res = await api.get('api/users');
+      const data = res.data;
       setPeopleList(data);
       setCheckedList(data.map((p) => !!p.checked));
     })();

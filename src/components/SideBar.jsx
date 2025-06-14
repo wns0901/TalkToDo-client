@@ -20,12 +20,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowRightIcon from "@mui/icons-material/ArrowRight";
 import { LoginContext } from "../contexts/LoginContextProvider";
 import { useLogin } from "../contexts/LoginContextProvider";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const SideBar = () => {
   const [meetings, setMeetings] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
-  const { userInfo, isTokenSet } = useContext(LoginContext);
+  const { userInfo, isTokenSet, logout } = useContext(LoginContext);
   const location = useLocation();
   const navigate = useNavigate();
   const { sidebarKey } = useLogin();
@@ -38,8 +39,10 @@ const SideBar = () => {
 
   useEffect(() => {
     const fetchMeetings = async () => {
-      if (!isTokenSet) {
-        console.log("토큰이 아직 설정되지 않았습니다. 잠시만 기다려주세요...");
+      if (!isTokenSet || !userInfo) {
+        console.log(
+          "토큰이 아직 설정되지 않았거나 사용자 정보가 없습니다. 잠시만 기다려주세요..."
+        );
         return;
       }
 
@@ -53,7 +56,7 @@ const SideBar = () => {
     };
 
     fetchMeetings();
-  }, [userInfo.id, isTokenSet, sidebarKey]);
+  }, [userInfo, isTokenSet, sidebarKey]);
 
   const handleMoreClick = (event, meetingId) => {
     setAnchorEl(event.currentTarget);
@@ -84,8 +87,8 @@ const SideBar = () => {
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 4,
         }}
       >
@@ -95,7 +98,6 @@ const SideBar = () => {
           to="/"
           fontWeight="bold"
           sx={{
-            mb: 2,
             cursor: "pointer",
             color: "inherit",
             textDecoration: "none",
@@ -103,6 +105,27 @@ const SideBar = () => {
         >
           Talk to Do
         </Typography>
+        <Button
+          variant="text"
+          color="inherit"
+          onClick={() => {
+            logout();
+          }}
+          startIcon={<LogoutIcon />}
+          sx={{ color: "black" }}
+        >
+          {/* 로그아웃 텍스트 제거 */}
+        </Button>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          mb: 4,
+        }}
+      >
         <Button
           component={Link}
           to="/my-schedule"
