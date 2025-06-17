@@ -16,5 +16,19 @@ RUN npm run build
 FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+
+# SSL 인증서 디렉토리 생성
+RUN mkdir -p /etc/nginx/ssl
+
+# GitHub Secrets에서 SSL 인증서 생성
+RUN --mount=type=secret,id=ssl_cert \
+    --mount=type=secret,id=ssl_key \
+    --mount=type=secret,id=ssl_ca \
+    cp /run/secrets/ssl_cert /etc/nginx/ssl/certificate.crt && \
+    cp /run/secrets/ssl_key /etc/nginx/ssl/private.key && \
+    cp /run/secrets/ssl_ca /etc/nginx/ssl/ca_bundle.crt && \
+    chmod 600 /etc/nginx/ssl/private.key && \
+    chmod 644 /etc/nginx/ssl/*.crt
+
+EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]

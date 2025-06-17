@@ -205,42 +205,42 @@ const SideBar = () => {
       <List>
         {Array.isArray(meetings) &&
           meetings.map((meeting) => {
-            const isCurrent = currentMeetingId === meeting.id;
+          const isCurrent = currentMeetingId === meeting.id;
             const isEditing = editingMeetingId === meeting.id;
 
-            return (
-              <ListItem
-                key={meeting.id}
-                selected={isCurrent}
-                secondaryAction={
+          return (
+            <ListItem
+              key={meeting.id}
+              selected={isCurrent}
+              secondaryAction={
                   !isEditing && (
-                    <IconButton
-                      edge="end"
-                      onClick={(e) => handleMoreClick(e, meeting.id)}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
+                <IconButton
+                  edge="end"
+                  onClick={(e) => handleMoreClick(e, meeting.id)}
+                >
+                  <MoreVertIcon />
+                </IconButton>
                   )
-                }
+              }
                 component={!isEditing ? Link : "div"}
                 to={!isEditing ? `/meetings/${meeting.id}` : undefined}
-                sx={{
-                  color: isCurrent ? "#3E1A11" : "black",
-                  fontWeight: isCurrent ? "bold" : "normal",
-                  backgroundColor: isCurrent ? "#f0e9e2" : "inherit",
+              sx={{
+                color: isCurrent ? "#3E1A11" : "black",
+                fontWeight: isCurrent ? "bold" : "normal",
+                backgroundColor: isCurrent ? "#f0e9e2" : "inherit",
                   "&:hover": {
                     color: isEditing ? "inherit" : "black",
                     backgroundColor: isEditing ? "inherit" : "#f0e9e2",
                   },
-                  textDecoration: "none",
-                }}
-              >
+                textDecoration: "none",
+              }}
+            >
                 {isCurrent && !isEditing && (
-                  <ArrowRightIcon
-                    fontSize="small"
-                    sx={{ mr: 1, color: "#3E1A11" }}
-                  />
-                )}
+                <ArrowRightIcon
+                  fontSize="small"
+                  sx={{ mr: 1, color: "#3E1A11" }}
+                />
+              )}
 
                 {isEditing ? (
                   <Box
@@ -279,22 +279,22 @@ const SideBar = () => {
                     </IconButton>
                   </Box>
                 ) : (
-                  <ListItemText
-                    primary={meeting.title}
-                    primaryTypographyProps={{
-                      noWrap: true,
-                      sx: {
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: "180px",
-                      },
-                    }}
-                  />
+              <ListItemText
+                primary={meeting.title}
+                primaryTypographyProps={{
+                  noWrap: true,
+                  sx: {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: "180px",
+                  },
+                }}
+              />
                 )}
-              </ListItem>
-            );
-          })}
+            </ListItem>
+          );
+        })}
       </List>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
