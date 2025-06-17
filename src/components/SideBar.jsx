@@ -10,6 +10,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  TextField,
 } from "@mui/material";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -26,6 +27,8 @@ const SideBar = () => {
   const [meetings, setMeetings] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+  const [editingMeetingId, setEditingMeetingId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const { userInfo, isTokenSet, logout } = useContext(LoginContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,9 +52,12 @@ const SideBar = () => {
       try {
         const userId = userInfo.id;
         const response = await api.get("/api/meetings/user/" + userId);
-        setMeetings(response.data);
+        // 응답 데이터가 배열인지 확인하고 설정
+        const meetingsData = Array.isArray(response.data) ? response.data : [];
+        setMeetings(meetingsData);
       } catch (error) {
         console.error("미팅 목록을 가져오는데 실패했습니다:", error);
+        setMeetings([]); // 에러 시 빈 배열로 설정
       }
     };
 
@@ -66,6 +72,65 @@ const SideBar = () => {
   const handleClose = () => {
     setAnchorEl(null);
     setSelectedMeetingId(null);
+  };
+
+  const handleEditTitle = () => {
+    const selectedMeeting = meetings.find(
+      (meeting) => meeting.id === selectedMeetingId
+    );
+    if (selectedMeeting) {
+      setEditingMeetingId(selectedMeetingId);
+      setEditingTitle(selectedMeeting.title);
+    }
+    handleClose();
+  };
+
+  const handleSaveTitle = async () => {
+    try {
+      await api.patch(`/api/meetings/${editingMeetingId}/title`, editingTitle);
+
+      // 로컬 상태 업데이트
+      setMeetings((prevMeetings) =>
+        prevMeetings.map((meeting) =>
+          meeting.id === editingMeetingId
+            ? { ...meeting, title: editingTitle }
+            : meeting
+        )
+      );
+
+      setEditingMeetingId(null);
+      setEditingTitle("");
+    } catch (error) {
+      console.error("미팅 제목 수정에 실패했습니다:", error);
+      alert("제목 수정에 실패했습니다.");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMeetingId(null);
+    setEditingTitle("");
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      handleSaveTitle();
+    } else if (event.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
+  const handleDeleteMeeting = async () => {
+    try {
+      await api.delete(`/api/meetings/${selectedMeetingId}`);
+      setMeetings((prevMeetings) =>
+        prevMeetings.filter((meeting) => meeting.id !== selectedMeetingId)
+      );
+      handleClose();
+      navigate("/");
+    } catch (error) {
+      console.error("미팅 삭제에 실패했습니다:", error);
+      alert("미팅 삭제에 실패했습니다.");
+    }
   };
 
   return (
@@ -138,59 +203,106 @@ const SideBar = () => {
       </Box>
 
       <List>
-        {meetings.map((meeting) => {
-          const isCurrent = currentMeetingId === meeting.id;
-          return (
-            <ListItem
-              key={meeting.id}
-              selected={isCurrent}
-              secondaryAction={
-                <IconButton
-                  edge="end"
-                  onClick={(e) => handleMoreClick(e, meeting.id)}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              }
-              component={Link}
-              to={`/meetings/${meeting.id}`}
-              sx={{
-                color: isCurrent ? "#3E1A11" : "black",
-                fontWeight: isCurrent ? "bold" : "normal",
-                backgroundColor: isCurrent ? "#f0e9e2" : "inherit",
-                "&:hover": { color: "black", backgroundColor: "#f0e9e2" },
-                textDecoration: "none",
-              }}
-            >
-              {isCurrent && (
-                <ArrowRightIcon
-                  fontSize="small"
-                  sx={{ mr: 1, color: "#3E1A11" }}
-                />
-              )}
-              <ListItemText
-                primary={meeting.title}
-                primaryTypographyProps={{
-                  noWrap: true,
-                  sx: {
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    maxWidth: "180px",
+        {Array.isArray(meetings) &&
+          meetings.map((meeting) => {
+            const isCurrent = currentMeetingId === meeting.id;
+            const isEditing = editingMeetingId === meeting.id;
+
+            return (
+              <ListItem
+                key={meeting.id}
+                selected={isCurrent}
+                secondaryAction={
+                  !isEditing && (
+                    <IconButton
+                      edge="end"
+                      onClick={(e) => handleMoreClick(e, meeting.id)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  )
+                }
+                component={!isEditing ? Link : "div"}
+                to={!isEditing ? `/meetings/${meeting.id}` : undefined}
+                sx={{
+                  color: isCurrent ? "#3E1A11" : "black",
+                  fontWeight: isCurrent ? "bold" : "normal",
+                  backgroundColor: isCurrent ? "#f0e9e2" : "inherit",
+                  "&:hover": {
+                    color: isEditing ? "inherit" : "black",
+                    backgroundColor: isEditing ? "inherit" : "#f0e9e2",
                   },
+                  textDecoration: "none",
                 }}
-              />
-            </ListItem>
-          );
-        })}
+              >
+                {isCurrent && !isEditing && (
+                  <ArrowRightIcon
+                    fontSize="small"
+                    sx={{ mr: 1, color: "#3E1A11" }}
+                  />
+                )}
+
+                {isEditing ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <TextField
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      size="small"
+                      sx={{
+                        flexGrow: 1,
+                        "& .MuiOutlinedInput-root": {
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                      autoFocus
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={handleSaveTitle}
+                      sx={{ ml: 1, color: "green" }}
+                    >
+                      ✓
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={handleCancelEdit}
+                      sx={{ color: "red" }}
+                    >
+                      ✕
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <ListItemText
+                    primary={meeting.title}
+                    primaryTypographyProps={{
+                      noWrap: true,
+                      sx: {
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: "180px",
+                      },
+                    }}
+                  />
+                )}
+              </ListItem>
+            );
+          })}
       </List>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-        <MenuItem onClick={handleClose}>
+        <MenuItem onClick={handleEditTitle}>
           <EditIcon fontSize="small" sx={{ mr: 1 }} />
           수정
         </MenuItem>
-        <MenuItem onClick={handleClose} sx={{ color: "red" }}>
+        <MenuItem onClick={handleDeleteMeeting} sx={{ color: "red" }}>
           <DeleteIcon fontSize="small" sx={{ mr: 1, color: "red" }} />
           삭제
         </MenuItem>

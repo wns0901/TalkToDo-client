@@ -35,13 +35,13 @@ export const filterEventsByDate = (events, dateStr, categoryFilter) => {
   // 날짜가 startDate와 endDate 사이에 있는 일정 필터링
   const targetDate = new Date(dateStr);
   let filtered = events.filter((event) => {
-    if (!event.startDate || !event.dueDate) {
+    if (!event.startDate || !event.endDate) {
       return false;
     }
 
     // LocalDate 형식의 날짜를 Date 객체로 변환
     const startDate = new Date(event.startDate);
-    const endDate = new Date(event.dueDate);
+    const endDate = new Date(event.endDate);
 
     if (isNaN(startDate) || isNaN(endDate)) {
       console.warn("Invalid Date:", event);
@@ -58,10 +58,12 @@ export const filterEventsByDate = (events, dateStr, categoryFilter) => {
   if (categoryFilter === "TODO") {
     filtered = filtered.filter((event) => event.type === "TODO");
   } else if (categoryFilter !== "전체") {
-    filtered = filtered.filter(
-      (event) =>
-        event.category === categoryFilter || event.type === categoryFilter
-    );
+    filtered = filtered.filter((event) => {
+      // category나 type이 null인 경우 처리
+      const eventCategory = event.category || event.type || "";
+      const eventType = event.type || event.category || "";
+      return eventCategory === categoryFilter || eventType === categoryFilter;
+    });
   }
 
   return filtered;
