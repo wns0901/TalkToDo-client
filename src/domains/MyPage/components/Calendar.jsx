@@ -1,51 +1,62 @@
-import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  IconButton, 
-  TableContainer, 
-  Table, 
-  TableBody, 
-  TableRow, 
+import React from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  TableContainer,
+  Table,
+  TableBody,
+  TableRow,
   TableCell,
   Button,
-  Tooltip
-} from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import AddIcon from '@mui/icons-material/Add';
-import { format, isSameMonth, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { myPageStyles } from '../css/MyPage.styles';
-import { getCategoryColor, filterEventsByDate } from '../js/utils';
+  Tooltip,
+} from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import AddIcon from "@mui/icons-material/Add";
+import {
+  format,
+  isSameMonth,
+  isSameDay,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+} from "date-fns";
+import { myPageStyles } from "../css/MyPage.styles";
+import { getCategoryColor, filterEventsByDate } from "../js/utils";
 
 /**
  * 캘린더 컴포넌트
  * 월별 일정을 표시하고 일정 관리 기능을 제공
  */
-const Calendar = ({ 
-  currentMonth, 
-  selectedDate, 
-  schedules, 
-  categoryFilter, 
-  onPrevMonth, 
-  onNextMonth, 
-  onDateClick, 
+const Calendar = ({
+  currentMonth,
+  selectedDate,
+  schedules,
+  categoryFilter,
+  onPrevMonth,
+  onNextMonth,
+  onDateClick,
   showMoreEvents,
   onCategoryFilterChange,
-  onAddEvent
+  onAddEvent,
 }) => {
   /**
    * 일정 추가 버튼 클릭 핸들러
    * 현재 선택된 필터를 기반으로 일정 타입을 설정
    */
   const handleAddEventClick = () => {
-    const defaultCategory = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : 'PERSONAL';
-    const defaultType = (categoryFilter && categoryFilter !== '전체') ? categoryFilter : 'PERSONAL';
+    const defaultCategory =
+      categoryFilter && categoryFilter !== "전체" ? categoryFilter : "PERSONAL";
+    const defaultType =
+      categoryFilter && categoryFilter !== "전체" ? categoryFilter : "PERSONAL";
     const defaultEvent = {
-      title: '',
-      date: format(selectedDate, 'yyyy-MM-dd'),
-      startDate: format(selectedDate, 'yyyy-MM-dd'),
-      endDate: format(selectedDate, 'yyyy-MM-dd'),
+      title: "",
+      date: format(selectedDate, "yyyy-MM-dd"),
+      startDate: format(selectedDate, "yyyy-MM-dd"),
+      endDate: format(selectedDate, "yyyy-MM-dd"),
       category: defaultCategory,
       type: defaultType,
     };
@@ -59,14 +70,16 @@ const Calendar = ({
   const renderHeader = () => {
     const dateFormat = "yyyy.MM";
     return (
-      <Box sx={{ 
-        ...myPageStyles.calendarHeader,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box
+        sx={{
+          ...myPageStyles.calendarHeader,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           <IconButton onClick={onPrevMonth} aria-label="이전 달">
             <ChevronLeftIcon />
           </IconButton>
@@ -99,53 +112,60 @@ const Calendar = ({
     if (events.length === 0) return null;
 
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 0.5,
-        maxHeight: '75px',
-        overflow: 'hidden'
-      }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.5,
+          maxHeight: "75px",
+          overflow: "hidden",
+        }}
+      >
         {/* 최대 2개의 이벤트만 표시 */}
         {events.slice(0, 2).map((event) => (
-          <Box 
-            key={event.id} 
-            sx={{ 
-              backgroundColor: getCategoryColor(event.category),
-              padding: '2px 4px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              color: 'black',
-              textAlign: 'left',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              minHeight: '20px',
-              maxWidth: '100%',
-              boxSizing: 'border-box',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+          <Box
+            key={event.id}
+            sx={{
+              backgroundColor: getCategoryColor(
+                event.category || event.type || "default"
+              ),
+              padding: "2px 4px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              color: "black",
+              textAlign: "left",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minHeight: "20px",
+              maxWidth: "100%",
+              boxSizing: "border-box",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               // 할일에서 추가된 일정인 경우 특별한 스타일 적용
-              ...(event.type === 'TODO' && {
-                border: '2px solid #3E1A11',
-                fontWeight: 'bold'
-              })
+              ...(event.type === "TODO" && {
+                border: "2px solid #3E1A11",
+                fontWeight: "bold",
+              }),
             }}
           >
-            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <Box
+              component="span"
+              sx={{ overflow: "hidden", textOverflow: "ellipsis" }}
+            >
               {event.title}
             </Box>
-            {event.type === 'TODO' && (
-              <Box 
-                component="span" 
-                sx={{ 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
-                  backgroundColor: '#3E1A11', 
-                  marginLeft: '4px',
-                  flexShrink: 0
+            {event.type === "TODO" && (
+              <Box
+                component="span"
+                sx={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  backgroundColor: "#3E1A11",
+                  marginLeft: "4px",
+                  flexShrink: 0,
                 }}
               />
             )}
@@ -153,15 +173,15 @@ const Calendar = ({
         ))}
         {/* 2개 이상의 이벤트가 있는 경우 더보기 표시 */}
         {events.length > 2 && (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              fontSize: '12px', 
-              color: '#555',
-              cursor: 'pointer',
-              '&:hover': {
-                textDecoration: 'underline'
-              }
+          <Box
+            sx={{
+              textAlign: "center",
+              fontSize: "12px",
+              color: "#555",
+              cursor: "pointer",
+              "&:hover": {
+                textDecoration: "underline",
+              },
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -189,19 +209,19 @@ const Calendar = ({
     let day = startDate;
 
     // 요일 헤더
-    const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
+    const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
 
     // 카테고리 필터 (한글 표시용)
     const categoryLabels = {
-      '전체': '전체',
-      'COMPANY': '회사',
-      'TEAM': '팀',
-      'PERSONAL': '개인',
-      'TODO': '할일'
+      전체: "전체",
+      COMPANY: "회사",
+      TEAM: "팀",
+      PERSONAL: "개인",
+      TODO: "할일",
     };
 
     // 카테고리 필터
-    const categories = ['전체', 'COMPANY', 'TEAM', 'PERSONAL', 'TODO'];
+    const categories = ["전체", "COMPANY", "TEAM", "PERSONAL", "TODO"];
 
     // 카테고리 필터 행
     const categoryFilters = (
@@ -213,14 +233,20 @@ const Calendar = ({
               variant={categoryFilter === category ? "contained" : "outlined"}
               size="small"
               onClick={() => onCategoryFilterChange(category)}
-              sx={{ 
+              sx={{
                 mx: 0.5,
-                minWidth: '60px',
-                backgroundColor: categoryFilter === category ? getCategoryColor(category) : 'transparent',
-                color: categoryFilter === category ? 'white' : 'inherit',
-                '&:hover': {
-                  backgroundColor: categoryFilter === category ? getCategoryColor(category) : 'rgba(0, 0, 0, 0.04)',
-                }
+                minWidth: "60px",
+                backgroundColor:
+                  categoryFilter === category
+                    ? getCategoryColor(category)
+                    : "transparent",
+                color: categoryFilter === category ? "white" : "inherit",
+                "&:hover": {
+                  backgroundColor:
+                    categoryFilter === category
+                      ? getCategoryColor(category)
+                      : "rgba(0, 0, 0, 0.04)",
+                },
               }}
             >
               {categoryLabels[category]}
@@ -234,15 +260,15 @@ const Calendar = ({
     const dayHeaders = (
       <TableRow>
         {daysOfWeek.map((day, index) => (
-          <TableCell 
-            key={index} 
-            align="center" 
-            sx={{ 
-              py: 1, 
-              color: index === 0 ? 'red' : index === 6 ? 'blue' : 'inherit',
-              fontWeight: 'bold',
-              borderBottom: '1px solid #e0e0e0',
-              borderTop: '1px solid #e0e0e0'
+          <TableCell
+            key={index}
+            align="center"
+            sx={{
+              py: 1,
+              color: index === 0 ? "red" : index === 6 ? "blue" : "inherit",
+              fontWeight: "bold",
+              borderBottom: "1px solid #e0e0e0",
+              borderTop: "1px solid #e0e0e0",
             }}
           >
             {day}
@@ -260,74 +286,85 @@ const Calendar = ({
       let weekRow = [];
       for (let i = 0; i < 7; i++) {
         // 해당 날짜에 표시될 이벤트 필터링
-        const formattedDate = format(day, 'yyyy-MM-dd');
-        let dayEvents = filterEventsByDate(schedules, formattedDate, categoryFilter);
-        
+        const formattedDate = format(day, "yyyy-MM-dd");
+        let dayEvents = filterEventsByDate(
+          schedules,
+          formattedDate,
+          categoryFilter
+        );
+
+        // 디버깅용 로그
+        if (dayEvents.length > 0) {
+          console.log(`날짜 ${formattedDate}의 이벤트:`, dayEvents);
+        }
+
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isSelected = isSameDay(day, selectedDate);
         const isOtherMonth = !isCurrentMonth;
-        
-        // 현재 날짜 객체 복제 
+
+        // 현재 날짜 객체 복제
         const currentDay = new Date(day);
 
         weekRow.push(
-          <TableCell 
-            key={`cell-${format(currentDay, 'yyyy-MM-dd')}`}
-            align="center" 
+          <TableCell
+            key={`cell-${format(currentDay, "yyyy-MM-dd")}`}
+            align="center"
             onClick={() => onDateClick(currentDay)}
             onDoubleClick={() => {
               onDateClick(currentDay);
-              
+
               if (dayEvents.length > 0) {
                 showMoreEvents(dayEvents);
               }
             }}
-            sx={{ 
+            sx={{
               ...myPageStyles.calendarCell,
-              cursor: 'pointer',
-              ...(isSelected ? { 
-                bgcolor: '#f0f0f0',
-                boxShadow: 'inset 0 0 0 2px #3E1A11',
-                fontWeight: 'bold'
-              } : {}),
-              ...(!isCurrentMonth && { color: '#ccc' }),
-              transition: 'all 0.2s',
-              '&:hover': {
-                bgcolor: '#f9f9f9'
-              }
+              cursor: "pointer",
+              ...(isSelected
+                ? {
+                    bgcolor: "#f0f0f0",
+                    boxShadow: "inset 0 0 0 2px #3E1A11",
+                    fontWeight: "bold",
+                  }
+                : {}),
+              ...(!isCurrentMonth && { color: "#ccc" }),
+              transition: "all 0.2s",
+              "&:hover": {
+                bgcolor: "#f9f9f9",
+              },
             }}
           >
-            <Typography 
-              sx={{ 
-                fontSize: '15px',
-                fontWeight: isSelected ? 'bold' : 'normal',
-                color: isOtherMonth 
-                  ? '#ccc' 
-                  : i === 0 
-                    ? 'red' 
-                    : i === 6 
-                      ? 'blue' 
-                      : 'inherit',
-                textAlign: 'left',
+            <Typography
+              sx={{
+                fontSize: "15px",
+                fontWeight: isSelected ? "bold" : "normal",
+                color: isOtherMonth
+                  ? "#ccc"
+                  : i === 0
+                  ? "red"
+                  : i === 6
+                  ? "blue"
+                  : "inherit",
+                textAlign: "left",
                 mb: 1,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
               {format(day, dateFormat)}
               {dayEvents.length > 0 && (
                 <Box
                   sx={{
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    backgroundColor: '#757575',
-                    color: 'white',
-                    fontSize: '11px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    backgroundColor: "#757575",
+                    color: "white",
+                    fontSize: "11px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
                   {dayEvents.length}
@@ -345,15 +382,13 @@ const Calendar = ({
 
     return (
       <TableContainer>
-        <Table 
-          sx={{ 
-            minWidth: 650, 
-            tableLayout: 'fixed' 
+        <Table
+          sx={{
+            minWidth: 650,
+            tableLayout: "fixed",
           }}
         >
-          <TableBody>
-            {rows}
-          </TableBody>
+          <TableBody>{rows}</TableBody>
         </Table>
       </TableContainer>
     );
@@ -367,4 +402,4 @@ const Calendar = ({
   );
 };
 
-export default Calendar; 
+export default Calendar;

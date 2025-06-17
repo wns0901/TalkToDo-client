@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Divider,
-  IconButton,
-  TextField,
-  CircularProgress,
-  Alert,
-  Snackbar,
-} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Paper,
+  Snackbar,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { getMeetingNotes, updateMeetingNotes } from "../apis/api";
+import { useParams } from "react-router-dom";
 
 /**
  * 회의록 섹션 타입
@@ -25,7 +26,7 @@ const SECTION_TYPES = {
 /**
  * 회의록 탭 컴포넌트
  */
-const MeetingNotesTab = ({ meetingId = 1 }) => {
+const MeetingNotesTab = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [notes, setNotes] = useState({
@@ -33,6 +34,8 @@ const MeetingNotesTab = ({ meetingId = 1 }) => {
     summary: "",
     id: "",
   });
+
+  const { meetingId } = useParams();
 
   const [isEditing, setIsEditing] = useState({
     title: false,
