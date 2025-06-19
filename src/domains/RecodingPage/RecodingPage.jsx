@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Box, IconButton, Stack, CircularProgress } from "@mui/material";
 import MicIcon from "@mui/icons-material/Mic";
 import StopIcon from "@mui/icons-material/Stop";
@@ -20,6 +20,7 @@ const Recoder = () => {
   const mediaRecorderRef = useRef(null);
   const recordRTCRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const streamRef = useRef(null); // 스트림 참조 추가
   const navigate = useNavigate();
   const { refreshSidebar } = useLogin();
 
@@ -106,6 +107,8 @@ const Recoder = () => {
         },
       });
 
+      streamRef.current = stream; // 스트림 저장
+
       const recordRTC = new RecordRTC(stream, {
         type: "audio",
         mimeType: "audio/mp3",
@@ -146,6 +149,8 @@ const Recoder = () => {
         },
       });
 
+      streamRef.current = stream; // 스트림 저장
+
       const mimeType = getSupportedMimeType();
       const mediaRecorder = new window.MediaRecorder(stream, {
         mimeType: mimeType,
@@ -176,6 +181,24 @@ const Recoder = () => {
     }
   };
 
+  // 스트림 정리 함수
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+      streamRef.current = null;
+      console.log("마이크 스트림 정리 완료");
+    }
+  };
+
+  // 컴포넌트 언마운트 시 스트림 정리
+  useEffect(() => {
+    return () => {
+      stopStream();
+    };
+  }, []);
+
   // 녹음 시작/정지 토글
   const handleMicClick = async () => {
     if (!isRecording) {
@@ -195,6 +218,7 @@ const Recoder = () => {
       }
       setIsRecording(false);
       setIsPaused(false);
+      stopStream(); // 스트림 정리
     }
   };
 
@@ -212,6 +236,7 @@ const Recoder = () => {
     }
     setIsRecording(false);
     setIsPaused(false);
+    stopStream(); // 스트림 정리
   };
 
   // 일시정지/재개 버튼

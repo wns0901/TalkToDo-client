@@ -93,7 +93,7 @@ const LoginContextProvider = ({ children }) => {
       const { authorization } = headers;
 
       const accessToken = authorization.replace("Bearer ", "");
-      
+
       console.log(response.status);
       if (response.status === 200) {
         Cookies.set("accessToken", accessToken);
