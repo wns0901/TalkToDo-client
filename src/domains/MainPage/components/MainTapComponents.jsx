@@ -100,8 +100,13 @@ const MainTapComponents = () => {
               onChange={(newValue) => setMeetingDate(newValue)}
               slotProps={{
                 textField: {
-                  fullWidth: true,
-                  sx: { mt: 3, mb: 1, background: "#fff", borderRadius: "8px" },
+                  sx: {
+                    mt: 3,
+                    mb: 1,
+                    background: "#fff",
+                    borderRadius: "8px",
+                    width: "400px",
+                  },
                 },
               }}
             />
