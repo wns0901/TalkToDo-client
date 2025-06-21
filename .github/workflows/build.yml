@@ -24,6 +24,10 @@ jobs:
           tags: wns0901/crew-dock-client:latest
           build-args: |
             VITE_BASE_URL=${{ secrets.VITE_BASE_URL }}
+          secrets: |
+            "ssl_cert=${{ secrets.SSL_CERT }}"
+            "ssl_key=${{ secrets.SSL_KEY }}"
+            "ssl_ca=${{ secrets.SSL_CA }}"
 
   deploy:
     runs-on: ubuntu-latest
@@ -52,4 +56,17 @@ jobs:
             sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
             sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
             sudo docker pull wns0901/crew-dock-client:latest
-            sudo docker run -d -p 80:80 --name crew-dock-client wns0901/crew-dock-client:latest
+            sudo docker run -d -p 80:80 -p 443:443 --name crew-dock-client wns0901/crew-dock-client:latest
+
+            # 디버깅: 컨테이너 상태 확인
+            echo "=== 컨테이너 상태 확인 ==="
+            sudo docker ps -a
+            echo "=== 컨테이너 로그 확인 ==="
+            sudo docker logs crew-dock-client
+            echo "=== 포트 확인 ==="
+            sudo netstat -tlnp | grep :80
+            sudo netstat -tlnp | grep :443
+            echo "=== SSL 인증서 확인 ==="
+            sudo docker exec crew-dock-client ls -la /etc/nginx/ssl/
+            echo "=== Nginx 설정 확인 ==="
+            sudo docker exec crew-dock-client nginx -t
