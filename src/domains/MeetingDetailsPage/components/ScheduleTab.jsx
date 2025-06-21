@@ -212,7 +212,7 @@ const ScheduleTab = () => {
     try {
       console.log("updatedSchedule:", updatedSchedule);
 
-      const response = await api.patch(
+      const response = await api.put(
         `/api/schedules/${updatedSchedule.id}`,
         updatedSchedule
       );
