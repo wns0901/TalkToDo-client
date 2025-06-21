@@ -218,13 +218,13 @@ const ScheduleTab = () => {
       if (updatedSchedule.startDate) {
         const startDate = new Date(updatedSchedule.startDate);
         processedSchedule.startDate = startDate.toISOString().split("T")[0]; // YYYY-MM-DD 형식
-        processedSchedule.startTime = startDate.toISOString(); // ISO 문자열 형식
+        processedSchedule.startTime = startDate.toTimeString().split(" ")[0]; // HH:mm:ss 형식
       }
 
       if (updatedSchedule.endDate) {
         const endDate = new Date(updatedSchedule.endDate);
         processedSchedule.endDate = endDate.toISOString().split("T")[0]; // YYYY-MM-DD 형식
-        processedSchedule.endTime = endDate.toISOString(); // ISO 문자열 형식
+        processedSchedule.endTime = endDate.toTimeString().split(" ")[0]; // HH:mm:ss 형식
       }
 
       console.log("processedSchedule:", processedSchedule);
