@@ -213,7 +213,7 @@ const ScheduleTab = () => {
       console.log("updatedSchedule:", updatedSchedule);
 
       const response = await api.patch(
-        `/api/schedules/meeting/${updatedSchedule.id}`,
+        `/api/schedules/${updatedSchedule.id}`,
         updatedSchedule
       );
 
@@ -225,6 +225,7 @@ const ScheduleTab = () => {
       );
       showSnackbar("수정되었습니다.");
     } catch (err) {
+      console.error("스케줄 수정 에러:", err);
       showSnackbar("수정에 실패했습니다.", "error");
     }
   };
