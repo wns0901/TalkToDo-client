@@ -212,9 +212,26 @@ const ScheduleTab = () => {
     try {
       console.log("updatedSchedule:", updatedSchedule);
 
+      // 날짜와 시간 분리 처리
+      const processedSchedule = { ...updatedSchedule };
+
+      if (updatedSchedule.startDate) {
+        const startDate = new Date(updatedSchedule.startDate);
+        processedSchedule.startDate = startDate.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+        processedSchedule.startTime = startDate.toISOString(); // ISO 문자열 형식
+      }
+
+      if (updatedSchedule.endDate) {
+        const endDate = new Date(updatedSchedule.endDate);
+        processedSchedule.endDate = endDate.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+        processedSchedule.endTime = endDate.toISOString(); // ISO 문자열 형식
+      }
+
+      console.log("processedSchedule:", processedSchedule);
+
       const response = await api.put(
         `/api/schedules/${updatedSchedule.id}`,
-        updatedSchedule
+        processedSchedule
       );
 
       console.log("response:", response.data);
