@@ -8,7 +8,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../apis/baseApi";
-import { getMeetingDetails } from "../../apis/fakeApi";
 import TabBar from "../../components/TabBar";
 import EmailSendingModal from "./components/EmailSendingModal";
 import MeetingNotesTab from "./components/MeetingNotesTab";
@@ -38,17 +37,18 @@ const MeetingDetailsPage = () => {
     fetchMeetingDetails(meetingId);
   }, [meetingId]);
 
-  const fetchMeetingDetails = (id) => {
+  const fetchMeetingDetails = async (id) => {
     setLoading(true);
-    getMeetingDetails(id)
-      .then((data) => {
-        setMeetingData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    try {
+      const response = await api.get(`/api/meetings/${id}`);
+      setMeetingData(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("회의 상세 정보를 가져오는데 실패했습니다:", err);
+      setError(err.message || "회의를 찾을 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /**
@@ -131,7 +131,7 @@ const MeetingDetailsPage = () => {
         />
 
         <TabPanel value={activeTabIndex} index={0}>
-          <TotalMeetingComponent /> 
+          <TotalMeetingComponent />
         </TabPanel>
         <TabPanel value={activeTabIndex} index={1}>
           <MeetingNotesTab />

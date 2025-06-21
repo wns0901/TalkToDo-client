@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import fakeApi from "../apis/fakeApi.js";
 import {
   Box,
   Typography,
