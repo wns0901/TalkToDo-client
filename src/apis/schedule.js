@@ -9,15 +9,10 @@ export const updateSchedule = (id, schedule) => api.put(`/api/schedules/${id}`, 
 // 일정 삭제
 export const deleteSchedule = (id) => api.delete(`/api/schedules/${id}`);
 
-export async function addTodoToCalendar(todoId, data, token) {
+export async function addTodoToCalendar(todoId, data) {
   return (await (api.post(`/api/schedules/todo/${todoId}/calendar`, data))).data 
 }
 
-export async function removeTodoFromCalendar(todoId, token) {
-  return fetch(`/api/schedules/todo/${todoId}/calendar`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
+export async function removeTodoFromCalendar(todoId) {
+  return (await (api.delete(`/api/schedules/todo/${todoId}/calendar`))).data 
 } 
